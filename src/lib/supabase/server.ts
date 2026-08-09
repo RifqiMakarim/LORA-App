@@ -2,7 +2,6 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
-
     const cookieStore = await cookies()
 
     return createServerClient(
@@ -17,15 +16,14 @@ export async function createClient() {
                     try {
                         cookieStore.set({ name, value, ...options })
                     } catch (error) {
-                        // Error ini wajar terjadi jika dipanggil dari Server Component
-                        // yang sedang merender halaman.
+                        console.warn('Gagal set cookie Supabase di Server Component:', error)
                     }
                 },
                 remove(name: string, options: CookieOptions) {
                     try {
                         cookieStore.set({ name, value: '', ...options })
                     } catch (error) {
-                        // Tangkap error jika dipanggil dari Server Component
+                        console.warn('Gagal remove cookie Supabase di Server Component:', error)
                     }
                 },
             },
