@@ -35,10 +35,10 @@ Sistem mendukung **3 Role Utama**, **1 State Akses Publik (Guest)**, serta kemam
 4. **Admin System (`is_admin = true`)**:
    - Tim internal LORA yang mengelola Master Data Event Kebudayaan/Pariwisata DIY-Jateng, pemantauan sistem, dan audit log.
 
-### 2.2 Mekanisme Dual Role & Onboarding
-- **Initial Registration:** Saat mendaftar, pengguna memilih role awal: *Customer* ATAU *Pemilik UMKM*.
-- **Onboarding Pemilik UMKM:** Jika mendaftar sebagai Pemilik UMKM, pengguna wajib melengkapi data profil bisnis (Nama Toko, Slug URL, WhatsApp, dan Wilayah API Jawa/DIY).
-- **In-App Switcher & Tambah Role:** Di dalam aplikasi (header/profile menu), terdapat tombol **"Aktifkan Role Pemilik UMKM"** (jika awal mendaftar Customer) atau **"Switch ke Mode Pembeli"**. Sistem memperbarui flag `is_buyer` & `is_seller` pada tabel `public.profiles` tanpa memerlukan logout/membuat akun baru.
+### 2.2 Mekanisme Dual Role & Onboarding (Gaya Shopee)
+- **Initial Registration:** Semua pengguna baru akan secara default didaftarkan sebagai Pembeli (`is_buyer = true`). Opsi pendaftaran sebagai Pemilik UMKM dipindahkan sebagai langkah lanjutan di dalam profil/dashboard setelah akun pembeli selesai dibuat.
+- **Onboarding Pemilik UMKM:** Pengguna yang ingin membuka toko dapat memilih menu "Buka Toko UMKM" di dalam profil/dashboard dan melengkapi data profil bisnis (Nama Toko, Slug URL, WhatsApp, dan Wilayah API Jawa/DIY) untuk mengaktifkan `is_seller = true`.
+- **Navigasi Peran & Akses Dashboard:** Sistem tidak menggunakan metode switch mode yang membalikkan state global aplikasi. Jika pengguna sudah mengaktifkan toko dan flag `is_seller = true`, mereka cukup mengakses menu Dashboard Toko yang akan langsung mengarahkan navigasi URL ke rute khusus (misalnya `/seller/dashboard`).
 
 ---
 
@@ -59,9 +59,9 @@ Sistem mendukung **3 Role Utama**, **1 State Akses Publik (Guest)**, serta kemam
 ## ⚡ 4. Spesifikasi Fitur Fungsional (Functional Requirements)
 
 ### Modul 1: Authentication, Dual-Role & Onboarding
-- **FR-001:** Sistem HARUS mendukung registrasi & login via Email/Password dan Google OAuth SSO.
+- **FR-001:** Sistem HARUS mendukung registrasi & login via Email/Password dan Google OAuth SSO dengan alur 'Gaya Shopee'. Semua pengguna baru akan secara default didaftarkan sebagai Pembeli (`is_buyer = true`) tanpa perlu memilih role di awal pendaftaran. Opsi pendaftaran sebagai Pemilik UMKM dipindahkan sebagai langkah lanjutan di dalam profil/dashboard setelah akun pembeli selesai dibuat.
 - **FR-002:** Sistem HARUS menyediakan alur onboarding penetapan slug URL etalase unik (`/toko/[slug]`) dan lokasi wilayah (Provinsi, Kota/Kab, Kecamatan, Desa).
-- **FR-003:** Sistem HARUS menyediakan fitur *Role Switcher* di header untuk pengguna yang memiliki status dual role (`is_buyer = true` & `is_seller = true`).
+- **FR-003:** Sistem HARUS menyediakan navigasi menu "Dashboard Toko" bagi pengguna dengan status `is_seller = true` yang langsung mengarahkan rute URL ke area manajemen bisnis tanpa membalikkan state global aplikasi.
 
 ### Modul 2: Smart Digital Storefront & Shopping Cart
 - **FR-004:** Sistem HARUS menyediakan halaman etalase publik yang dapat diakses publik/Guest tanpa login.
