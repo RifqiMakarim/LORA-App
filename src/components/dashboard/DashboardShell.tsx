@@ -202,7 +202,7 @@ export default function DashboardShell({
                         <span>Kembali ke Katalog Toko</span>
                     </Link>
 
-                    <form action={logout}>
+                    <form action={logout} onSubmit={() => { if (typeof window !== 'undefined') localStorage.removeItem('lora_global_cart'); }}>
                         <button
                             type="submit"
                             className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl transition-all cursor-pointer text-left"

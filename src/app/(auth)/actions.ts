@@ -79,7 +79,8 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
 export async function logout() {
     const supabase = await createClient()
     await supabase.auth.signOut()
-    redirect('/login')
+    revalidatePath('/', 'layout')
+    redirect('/')
 }
 
 // 4. Fungsi Login via Google OAuth SSO (FR-001)

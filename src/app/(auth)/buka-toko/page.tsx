@@ -175,7 +175,7 @@ export default function BukaTokoPage() {
                 </Link>
 
                 {/* Form Card Surface */}
-                <div className="bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 rounded-3xl p-6 sm:p-10 space-y-8">
+                <div className="bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 rounded-3xl p-4 sm:p-6 md:p-10 space-y-6 sm:space-y-8 w-full max-w-2xl mx-auto">
                     {/* Header Title */}
                     <div className="space-y-2 border-b border-slate-100 pb-6">
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-semibold">

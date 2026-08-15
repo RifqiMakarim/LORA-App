@@ -88,7 +88,7 @@ export default function UserProfileDropdown({ user, profile }: UserProfileDropdo
                     <div className="py-1">
                         {/* Menu Options */}
                         <Link
-                            href="/settings"
+                            href="/akun"
                             onClick={() => setIsOpen(false)}
                             className="flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100/80 rounded-xl transition-colors"
                         >
@@ -119,7 +119,7 @@ export default function UserProfileDropdown({ user, profile }: UserProfileDropdo
 
                     <div className="border-t border-slate-100 pt-1">
                         {/* Tombol Keluar */}
-                        <form action={logout}>
+                        <form action={logout} onSubmit={() => { if (typeof window !== 'undefined') localStorage.removeItem('lora_global_cart'); }}>
                             <button
                                 type="submit"
                                 className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors text-left"
