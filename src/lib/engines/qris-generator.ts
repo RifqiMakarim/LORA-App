@@ -35,7 +35,7 @@ export function generateQRISPayload(input: QRISGeneratorInput): string {
     const payloadWithoutCrc =
         `000201` +
         `010212` +
-        `26580015ID.QRIS.WWW` + `0118${nmin}` + `0215ID1020034567890` +
+        `26580015ID.QRIS.WWW` + `01${nmin.length.toString().padStart(2, '0')}${nmin}` + `0215ID1020034567890` +
         `52045999` +
         `5303360` +
         `54${formattedAmount.length.toString().padStart(2, '0')}${formattedAmount}` +
