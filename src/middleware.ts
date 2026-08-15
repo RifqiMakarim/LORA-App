@@ -50,12 +50,7 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // Redirect pengguna yang sudah login dari rute root `/` ke `/katalog`
-    if (user && request.nextUrl.pathname === '/') {
-        const url = request.nextUrl.clone();
-        url.pathname = '/katalog';
-        return NextResponse.redirect(url);
-    }
+    // Landing page (/) should remain accessible for both authenticated and guest users.
 
     return supabaseResponse;
 }
