@@ -67,11 +67,11 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
         };
     }, []);
 
-    // Handler Submit Pencarian
+    // Handler Submit Pencarian Global Header
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
         if (searchQuery.trim()) {
-            router.push(`/?q=${encodeURIComponent(searchQuery.trim())}`);
+            router.push(`/katalog?q=${encodeURIComponent(searchQuery.trim())}`);
             setIsMobileSearchOpen(false);
             setIsMobileMenuOpen(false);
         }
@@ -111,8 +111,8 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
 
             {/* Main Navbar */}
             <div suppressHydrationWarning className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
-                {/* 1. KIRI: Brand Logo LORA */}
-                <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
+                {/* 1. KIRI: Brand Logo LORA (Mengarah SELALU ke /katalog) */}
+                <Link href="/katalog" className="flex items-center gap-2 group flex-shrink-0">
                     <div suppressHydrationWarning className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-terracotta to-amber-500 flex items-center justify-center shadow-md shadow-terracotta/20 group-hover:scale-105 transition-transform">
                         <span className="text-white font-extrabold text-sm sm:text-base tracking-wider font-outfit">L</span>
                     </div>
@@ -179,7 +179,7 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
 
                     {/* Desktop Menu: Pesanan Saya */}
                     <Link
-                        href={user ? '/orders' : '/login'}
+                        href={user ? '/user/pesanan' : '/login'}
                         className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:text-terracotta hover:bg-slate-100 rounded-2xl transition-all group"
                         title="Riwayat Pesanan Saya"
                     >
@@ -187,10 +187,10 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
                         <span>Pesanan Saya</span>
                     </Link>
 
-                    {/* Desktop Menu: Logika Tombol Toko */}
+                    {/* Desktop Menu: Logika Tombol Toko (SELALU Mengarah ke /toko/dashboard) */}
                     {profile?.is_seller ? (
                         <Link
-                            href="/dashboard"
+                            href="/toko/dashboard"
                             className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 rounded-2xl text-xs font-bold transition-all shadow-sm group cursor-pointer"
                         >
                             <Store className="w-4 h-4 text-amber-700 group-hover:scale-105 transition-transform" />
@@ -354,7 +354,7 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
                         </Link>
 
                         <Link
-                            href={user ? '/orders' : '/login'}
+                            href={user ? '/user/pesanan' : '/login'}
                             onClick={() => setIsMobileMenuOpen(false)}
                             className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 rounded-xl"
                         >
@@ -364,7 +364,7 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
 
                         {profile?.is_seller ? (
                             <Link
-                                href="/dashboard"
+                                href="/toko/dashboard"
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold text-amber-900 bg-amber-50 rounded-xl border border-amber-200"
                             >

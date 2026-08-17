@@ -1,7 +1,8 @@
 import Link from 'next/link';
-import { Filter, PackageX } from 'lucide-react';
+import { PackageX, RotateCcw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import ProductCard from '@/components/storefront/ProductCard';
+import KatalogFilter from '@/components/storefront/KatalogFilter';
 
 interface BusinessRel {
     name: string;
@@ -24,25 +25,53 @@ interface ProductWithBusiness {
     businesses: BusinessRel | BusinessRel[] | null;
 }
 
-const categories = ['Semua Produk', 'Batik & Kain', 'Kuliner & Oleh-oleh', 'Kerajinan Tangan', 'Fashion & Aksesoris'];
+const CATEGORIES = [
+    'Semua Produk',
+    'Batik & Kain',
+    'Kuliner & Oleh-oleh',
+    'Kerajinan Tangan',
+    'Fashion & Aksesoris',
+];
+
+interface KatalogPageProps {
+    searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
+}
 
 /**
  * Server Component Katalog Utama Storefront LORA (/katalog)
- * Mengambil data produk aktif dari Supabase (join tabel businesses)
+ * Membaca searchParams URL, melakukan pencarian & filter kategori secara dinamis dari Supabase
  */
-export default async function KatalogPage() {
+export default async function KatalogPage({ searchParams }: KatalogPageProps) {
+    const resolvedSearchParams = searchParams ? await searchParams : {};
+    const searchRaw = (resolvedSearchParams.q as string) || (resolvedSearchParams.search as string) || '';
+    const categoryRaw = (resolvedSearchParams.category as string) || '';
+
+    const searchTerm = searchRaw.trim();
+    const categoryTerm = categoryRaw.trim();
+
     const supabase = await createClient();
 
-    // Data Fetching Supabase: products joined with businesses
-    const { data: rawProducts, error } = await supabase
+    // Inisialisasi Dynamic Query Supabase
+    let query = supabase
         .from('products')
         .select('*, businesses(name, slug, city_name, province_name)')
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
+        .eq('is_active', true);
 
+    // Filter Pencarian Teks (ilike pada nama atau deskripsi produk)
+    if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
+    }
+
+    // Filter Kategori Produk
+    if (categoryTerm && categoryTerm !== 'Semua Produk' && categoryTerm !== 'Semua') {
+        query = query.eq('category', categoryTerm);
+    }
+
+    // Eksekusi Query
+    const { data: rawProducts, error } = await query.order('created_at', { ascending: false });
     const products: ProductWithBusiness[] = rawProducts || [];
 
-    // Helper untuk mengekstrak relasi bisnis tunggal
+    // Helper mengekstrak data relasi bisnis tunggal
     const getBusiness = (b: BusinessRel | BusinessRel[] | null): BusinessRel | null => {
         if (!b) return null;
         if (Array.isArray(b)) return b[0] || null;
@@ -51,7 +80,7 @@ export default async function KatalogPage() {
 
     return (
         <div suppressHydrationWarning className="space-y-6 sm:space-y-8">
-            {/* Header Hero Banner Katalog (Responsive Mobile Padding & Fonts) */}
+            {/* Header Hero Banner Katalog */}
             <div suppressHydrationWarning className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white p-5 sm:p-10 shadow-xl">
                 <div suppressHydrationWarning className="relative z-10 max-w-xl space-y-3 sm:space-y-4">
                     <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 border border-amber-400/40 text-amber-300 rounded-full text-[11px] sm:text-xs font-semibold uppercase tracking-wider">
@@ -66,44 +95,45 @@ export default async function KatalogPage() {
                 </div>
             </div>
 
-            {/* Category Filter Horizontal Pills */}
-            <div suppressHydrationWarning className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
-                <span className="flex items-center gap-1 text-xs font-bold text-slate-500 pr-1 flex-shrink-0">
-                    <Filter className="w-3.5 h-3.5" /> Kategori:
-                </span>
-                {categories.map((cat, idx) => (
-                    <button
-                        key={cat}
-                        type="button"
-                        className={`px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-xl sm:rounded-2xl text-xs font-bold whitespace-nowrap transition-all cursor-pointer flex-shrink-0 ${idx === 0
-                                ? 'bg-terracotta text-white shadow-md shadow-terracotta/25'
-                                : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
-                            }`}
-                    >
-                        {cat}
-                    </button>
-                ))}
-            </div>
+            {/* Client Component: Search Bar & Category Filter Bar */}
+            <KatalogFilter categories={CATEGORIES} />
 
-            {/* Product Grid Section */}
-            <div suppressHydrationWarning className="space-y-3 sm:space-y-4">
+            {/* Product Grid Section Header */}
+            <div suppressHydrationWarning className="space-y-4">
                 <div suppressHydrationWarning className="flex items-center justify-between">
                     <h2 className="text-lg sm:text-xl font-outfit font-bold text-slate-900">
-                        Rekomendasi Produk Unggulan
+                        {categoryTerm && categoryTerm !== 'Semua Produk'
+                            ? `Kategori: ${categoryTerm}`
+                            : searchTerm
+                            ? `Hasil Pencarian: "${searchTerm}"`
+                            : 'Rekomendasi Produk Unggulan'}
                     </h2>
                     <span className="text-xs text-slate-500 font-medium">
                         Menampilkan {products.length} Produk
                     </span>
                 </div>
 
-                {/* Status Kosong / Empty State */}
+                {/* Status Kosong / Empty State (Jika produk tidak ditemukan) */}
                 {(!products || products.length === 0 || error) ? (
-                    <div suppressHydrationWarning className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-12 text-center space-y-3 shadow-sm">
-                        <PackageX className="w-12 h-12 text-slate-300 mx-auto" />
-                        <h3 className="text-base font-bold text-slate-800">Belum Ada Produk Tersedia</h3>
-                        <p className="text-xs text-slate-500 max-w-sm mx-auto">
-                            Produk unggulan UMKM Daerah Istimewa Yogyakarta & Jawa Tengah akan segera ditampilkan di katalog ini.
-                        </p>
+                    <div suppressHydrationWarning className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-10 sm:p-14 text-center space-y-4 shadow-sm">
+                        <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto">
+                            <PackageX className="w-8 h-8" />
+                        </div>
+                        <div className="space-y-1.5 max-w-md mx-auto">
+                            <h3 className="text-base font-bold text-slate-900">Produk Tidak Ditemukan</h3>
+                            <p className="text-xs text-slate-500 leading-relaxed font-medium">
+                                Produk tidak ditemukan. Coba gunakan kata kunci atau kategori lain.
+                            </p>
+                        </div>
+                        <div className="pt-2">
+                            <Link
+                                href="/katalog"
+                                className="inline-flex items-center gap-2 px-5 py-2.5 bg-terracotta hover:bg-terracotta-hover text-white rounded-2xl text-xs font-bold shadow-md shadow-terracotta/25 transition-all"
+                            >
+                                <RotateCcw className="w-3.5 h-3.5" />
+                                <span>Reset Filter & Lihat Semua Produk</span>
+                            </Link>
+                        </div>
                     </div>
                 ) : (
                     /* Grid Kartu Produk (Mobile 2 Kolom, Tablet 3 Kolom, Desktop 4 Kolom) */

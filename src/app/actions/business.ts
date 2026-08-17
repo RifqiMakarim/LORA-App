@@ -24,13 +24,6 @@ function generateSlug(name: string): string {
 
 /**
  * Server Action untuk Pendaftaran Toko (Business)
- * 1. Ambil user.id dari Supabase Auth
- * 2. Ambil contact_number dari tabel profiles (kolom phone_number)
- * 3. Tangkap semua input dari form (termasuk ID & Nama Wilayah, Google Maps Link, URL Logo/Banner)
- * 4. Generate slug otomatis dari nama toko
- * 5. Insert data ke tabel businesses
- * 6. Update tabel profiles (set is_seller = true)
- * 7. Redirect ke /dashboard
  */
 export async function registerBusiness(
     prevStateOrFormData: RegisterBusinessState | FormData,
@@ -132,7 +125,6 @@ export async function registerBusiness(
         .insert([businessPayload]);
 
     if (insertError) {
-        // Jika terdapat duplikasi slug (unique constraint violation), coba tambahkan akhiran unik
         if (insertError.code === '23505' || insertError.message.includes('slug')) {
             const fallbackSlug = `${slug}-${Date.now().toString().slice(-4)}`;
             const { error: retryError } = await supabase
@@ -163,4 +155,89 @@ export async function registerBusiness(
     // 7. Revalidate cache dan redirect ke /dashboard
     revalidatePath('/', 'layout');
     redirect('/dashboard');
+}
+
+export interface UpdateBusinessInput {
+    id: string;
+    name: string;
+    slug?: string;
+    description?: string;
+    contact_number?: string;
+    province_id?: string;
+    province_name?: string;
+    city_id?: string;
+    city_name?: string;
+    district_id?: string;
+    district_name?: string;
+    village_id?: string;
+    village_name?: string;
+    address?: string;
+    google_maps_link?: string;
+    logo_url?: string;
+    banner_url?: string;
+    qris_image_url?: string;
+    bank_name?: string;
+    bank_account_number?: string;
+}
+
+/**
+ * Server Action untuk Mengupdate Pengaturan Profil Toko (Businesses)
+ */
+export async function updateBusinessSettings(input: UpdateBusinessInput): Promise<{ success?: boolean; error?: string }> {
+    try {
+        const supabase = await createClient();
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        if (authError || !user) {
+            return { error: 'Anda harus login terlebih dahulu untuk mengubah pengaturan toko.' };
+        }
+
+        if (!input.name || !input.name.trim()) {
+            return { error: 'Nama toko tidak boleh kosong.' };
+        }
+
+        const updatePayload: Record<string, any> = {
+            name: input.name.trim(),
+            description: input.description?.trim() || null,
+            contact_number: input.contact_number?.trim() || null,
+            province_id: input.province_id?.trim() || null,
+            province_name: input.province_name?.trim() || null,
+            city_id: input.city_id?.trim() || null,
+            city_name: input.city_name?.trim() || null,
+            district_id: input.district_id?.trim() || null,
+            district_name: input.district_name?.trim() || null,
+            village_id: input.village_id?.trim() || null,
+            village_name: input.village_name?.trim() || null,
+            address: input.address?.trim() || null,
+            google_maps_link: input.google_maps_link?.trim() || null,
+            logo_url: input.logo_url || null,
+            banner_url: input.banner_url || null,
+            qris_image_url: input.qris_image_url || null,
+            bank_name: input.bank_name?.trim() || null,
+            bank_account_number: input.bank_account_number?.trim() || null,
+            updated_at: new Date().toISOString(),
+        };
+
+        const { data: updatedRows, error: updateError } = await supabase
+            .from('businesses')
+            .update(updatePayload)
+            .eq('id', input.id)
+            .eq('owner_id', user.id)
+            .select();
+
+        if (updateError) {
+            console.error('[updateBusinessSettings Error]:', updateError);
+            return { error: `Gagal memperbarui profil toko: ${updateError.message}` };
+        }
+
+        if (!updatedRows || updatedRows.length === 0) {
+            return { error: 'Toko tidak ditemukan atau Anda tidak memiliki akses.' };
+        }
+
+        revalidatePath('/', 'layout');
+        return { success: true };
+    } catch (err: any) {
+        console.error('[updateBusinessSettings Exception]:', err);
+        return { error: err.message || 'Terjadi kesalahan sistem saat memperbarui profil toko.' };
+    }
 }

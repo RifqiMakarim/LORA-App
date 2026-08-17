@@ -2,7 +2,7 @@ import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 /**
- * Memperbarui sesi autentikasi Supabase dan menyinkronkan cookie pada setiap request
+ * Memperbarui sesi autentikasi Supabase dan mengontrol routing navigasi tanpa Infinite Redirect Loop
  */
 export async function updateSession(request: NextRequest) {
     let supabaseResponse = NextResponse.next({
@@ -30,18 +30,32 @@ export async function updateSession(request: NextRequest) {
         }
     );
 
-    // Memicu pembaruan token (refresh session) dengan memanggil getUser()
+    // Memicu pembaruan token (refresh session)
     const {
         data: { user },
     } = await supabase.auth.getUser();
 
-    // Proteksi Rute Terproteksi: Jika belum login dan mencoba mengakses rute rahasia/transaksi
+    const pathname = request.nextUrl.pathname;
+
+    // 1. ATURAN MUTLAK GUEST ROUTES ( / , /login , /register ):
+    // Middleware HANYA me-redirect user yang sudah login jika mereka mengakses rute tamu ini ke /katalog.
+    // DILARANG me-redirect user jika berada di rute publik seperti /katalog atau /toko/[slug] (penjual bebas lihat katalog publik).
+    const isGuestOnlyRoute = pathname === '/' || pathname === '/login' || pathname === '/register';
+    if (user && isGuestOnlyRoute) {
+        const url = request.nextUrl.clone();
+        url.pathname = '/katalog';
+        return NextResponse.redirect(url);
+    }
+
+    // 2. ATURAN PROTEKSI RUTE MEMBER/SELLER:
+    // Jika belum login dan mencoba mengakses rute terproteksi, arahkan ke /login
     const isProtectedRoute =
-        request.nextUrl.pathname.startsWith('/dashboard') ||
-        request.nextUrl.pathname.startsWith('/akun') ||
-        request.nextUrl.pathname.startsWith('/buka-toko') ||
-        request.nextUrl.pathname.includes('/checkout') ||
-        request.nextUrl.pathname.endsWith('/checkout');
+        pathname.startsWith('/dashboard') ||
+        pathname.startsWith('/toko/dashboard') ||
+        pathname.startsWith('/akun') ||
+        pathname.startsWith('/user') ||
+        pathname.startsWith('/buka-toko') ||
+        pathname.includes('/checkout');
 
     if (!user && isProtectedRoute) {
         const url = request.nextUrl.clone();
@@ -50,20 +64,18 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url);
     }
 
-    // Landing page (/) should remain accessible for both authenticated and guest users.
-
     return supabaseResponse;
 }
 
 /**
- * Middleware utama Next.js untuk penanganan Supabase Auth
+ * Middleware utama Next.js
  */
 export async function middleware(request: NextRequest) {
     return await updateSession(request);
 }
 
 /**
- * Config matcher untuk mengecualikan file statis, aset gambar, dan Next.js internal routes
+ * Config matcher mengecualikan static files & image assets
  */
 export const config = {
     matcher: [

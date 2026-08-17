@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
     LayoutDashboard,
+    ShoppingBag,
     Package,
     TrendingUp,
     Sparkles,
@@ -33,6 +34,7 @@ interface DashboardShellProps {
     } | null;
     business?: {
         name?: string | null;
+        slug?: string | null;
         logo_url?: string | null;
         city_name?: string | null;
         province_name?: string | null;
@@ -44,6 +46,11 @@ const navItems = [
         name: 'Beranda Dashboard',
         href: '/dashboard',
         icon: LayoutDashboard,
+    },
+    {
+        name: 'Pesanan',
+        href: '/toko/dashboard/pesanan',
+        icon: ShoppingBag,
     },
     {
         name: 'Inventaris / Stok',
@@ -68,7 +75,7 @@ const navItems = [
     },
     {
         name: 'Pengaturan Toko',
-        href: '/dashboard/settings',
+        href: '/toko/dashboard/pengaturan',
         icon: Settings,
     },
 ];
@@ -98,11 +105,10 @@ export default function DashboardShell({
                 />
             )}
 
-            {/* SIDEBAR KIRI (Fixed / Sticky di Desktop) */}
+            {/* SIDEBAR KIRI (Fixed Pinned di Left Viewport Desktop & Mobile) */}
             <aside
-                className={`fixed top-0 bottom-0 left-0 z-50 w-64 bg-slate-900 text-white flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static border-r border-slate-800 ${
-                    isMobileOpen ? 'translate-x-0' : '-translate-x-full'
-                }`}
+                className={`fixed top-0 bottom-0 left-0 z-40 w-64 bg-slate-900 text-white flex flex-col justify-between transition-transform duration-300 ease-in-out lg:translate-x-0 border-r border-slate-800 ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+                    }`}
             >
                 {/* Header Sidebar: Brand LORA Seller Centre */}
                 <div className="p-5 border-b border-slate-800 space-y-4">
@@ -166,17 +172,15 @@ export default function DashboardShell({
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setIsMobileOpen(false)}
-                                className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all group ${
-                                    isActive
+                                className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all group ${isActive
                                         ? 'bg-terracotta text-white shadow-md shadow-terracotta/25'
                                         : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
-                                }`}
+                                    }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <Icon
-                                        className={`w-4 h-4 transition-transform group-hover:scale-110 ${
-                                            isActive ? 'text-white' : 'text-slate-400 group-hover:text-amber-400'
-                                        }`}
+                                        className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-amber-400'
+                                            }`}
                                     />
                                     <span>{item.name}</span>
                                 </div>
@@ -192,16 +196,29 @@ export default function DashboardShell({
                     })}
                 </nav>
 
-                {/* Footer Sidebar: Kembali ke Katalog Toko & Quick Logout */}
-                <div className="p-3 border-t border-slate-800 space-y-2">
+                {/* Footer Sidebar: Navigasi Etalase Publik Toko & Katalog Utama */}
+                <div className="p-3 border-t border-slate-800 space-y-1.5">
+                    {/* 1. Kembali ke Katalog Toko (Etalase Publik Toko Milik User) */}
                     <Link
-                        href="/"
-                        className="flex items-center gap-2 px-3 py-2.5 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 rounded-2xl transition-all group"
+                        href={business?.slug ? `/toko/${business.slug}` : '/katalog'}
+                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-300 hover:text-white hover:bg-slate-800 rounded-2xl transition-all group"
+                        title="Lihat Etalase Publik Toko Saya"
                     >
                         <ArrowLeft className="w-4 h-4 text-amber-400 group-hover:-translate-x-1 transition-transform" />
-                        <span>Kembali ke Katalog Toko</span>
+                        <span>Lihat Katalog Toko</span>
                     </Link>
 
+                    {/* 2. Tombol Baru: Kembali ke Katalog Utama Regional (/katalog) */}
+                    <Link
+                        href="/katalog"
+                        className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 rounded-2xl transition-all group"
+                        title="Kembali ke Pasar Katalog Utama DIY & Jateng"
+                    >
+                        <Store className="w-4 h-4 text-terracotta group-hover:scale-105 transition-transform" />
+                        <span>Kembali ke Katalog Utama</span>
+                    </Link>
+
+                    {/* Quick Logout */}
                     <form action={logout} onSubmit={() => { if (typeof window !== 'undefined') localStorage.removeItem('lora_global_cart'); }}>
                         <button
                             type="submit"
@@ -215,7 +232,7 @@ export default function DashboardShell({
             </aside>
 
             {/* AREA KANAN (Header Top Bar & Dynamic Main Content) */}
-            <div className="flex-1 flex flex-col min-w-0">
+            <div className="flex-1 flex flex-col min-w-0 lg:pl-64">
                 {/* Header Top Bar Minimalis */}
                 <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-8 py-3 flex items-center justify-between shadow-xs">
                     <div className="flex items-center gap-3">

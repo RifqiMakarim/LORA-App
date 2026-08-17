@@ -216,9 +216,11 @@ export function CartProvider({ children, initialUser }: { children: React.ReactN
         setItems((prevItems) => {
             const existingIndex = prevItems.findIndex((i) => i.product.id === product.id);
             if (existingIndex > -1) {
-                const updated = [...prevItems];
-                updated[existingIndex].quantity += 1;
-                return updated;
+                return prevItems.map((item, index) =>
+                    index === existingIndex
+                        ? { ...item, quantity: item.quantity + 1 }
+                        : item
+                );
             }
             return [...prevItems, { product, quantity: 1, storeSlug, storeName }];
         });

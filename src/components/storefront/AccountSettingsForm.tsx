@@ -4,6 +4,7 @@ import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, Mail, Phone, Lock, Save, Loader2, Sparkles, CheckCircle2, Camera } from 'lucide-react';
 import toast from 'react-hot-toast';
+import Swal from 'sweetalert2';
 import BackButton from '@/components/ui/BackButton';
 import { updateProfile } from '@/app/actions/profile';
 
@@ -119,6 +120,7 @@ export default function AccountSettingsForm({ user, initialProfile }: AccountSet
         }
 
         setIsSubmitting(true);
+        const loadingToastId = toast.loading('Menyimpan perubahan profil...');
 
         try {
             const result = await updateProfile({
@@ -131,11 +133,63 @@ export default function AccountSettingsForm({ user, initialProfile }: AccountSet
                 throw new Error(result.error);
             }
 
-            toast.success('✅ Informasi profil berhasil disimpan!');
-            router.refresh();
+            toast.success('Informasi profil berhasil disimpan!', { id: loadingToastId });
+
+            await Swal.fire({
+                title: 'Berhasil Disimpan!',
+                text: 'Informasi akun dan data diri Anda telah berhasil diperbarui.',
+                icon: 'success',
+                confirmButtonColor: '#D97706',
+                confirmButtonText: 'Selesai',
+                customClass: {
+                    popup: 'rounded-3xl font-sans p-6',
+                    confirmButton: 'rounded-2xl font-bold px-5 py-2.5 text-xs',
+                },
+                willClose: () => {
+                    if (typeof document !== 'undefined') {
+                        document.body.style.overflow = 'auto';
+                        document.body.style.paddingRight = '0px';
+                        document.documentElement.style.overflow = 'auto';
+                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                        document.documentElement.classList.remove('swal2-shown', 'swal2-height-auto');
+                    }
+                },
+                didClose: () => {
+                    if (typeof document !== 'undefined') {
+                        document.body.style.overflow = 'auto';
+                        document.body.style.paddingRight = '0px';
+                        document.documentElement.style.overflow = 'auto';
+                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                        document.documentElement.classList.remove('swal2-shown', 'swal2-height-auto');
+                    }
+                },
+            });
+
+            if (typeof document !== 'undefined') {
+                document.body.style.overflow = 'auto';
+                document.body.style.paddingRight = '0px';
+                document.documentElement.style.overflow = 'auto';
+                document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                document.documentElement.classList.remove('swal2-shown', 'swal2-height-auto');
+            }
+
+            setTimeout(() => {
+                router.refresh();
+            }, 100);
         } catch (err: any) {
             console.error('Gagal memperbarui profil:', err);
-            toast.error(err.message || '❌ Gagal menyimpan perubahan profil.');
+            toast.error(err.message || 'Gagal menyimpan perubahan profil.', { id: loadingToastId });
+            Swal.fire({
+                title: 'Gagal Menyimpan',
+                text: err.message || 'Gagal menyimpan perubahan profil.',
+                icon: 'error',
+                confirmButtonColor: '#E11D48',
+                confirmButtonText: 'Mengerti',
+                customClass: {
+                    popup: 'rounded-3xl font-sans p-6',
+                    confirmButton: 'rounded-2xl font-bold px-5 py-2.5 text-xs',
+                },
+            });
         } finally {
             setIsSubmitting(false);
         }

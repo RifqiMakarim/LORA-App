@@ -4,6 +4,8 @@ import { useActionState, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CldUploadWidget } from 'next-cloudinary';
 import Swal from 'sweetalert2';
+import ImageUpload from '@/components/ImageUpload';
+import Combobox from '@/components/ui/Combobox';
 import { registerBusiness } from '@/app/actions/business';
 
 // Opsi Bank Populer di Indonesia
@@ -364,7 +366,7 @@ export default function BukaTokoPage() {
                 </Link>
 
                 {/* Form Card Surface */}
-                <div className="bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 rounded-3xl p-4 sm:p-6 md:p-10 space-y-6 sm:space-y-8 w-full max-w-2xl mx-auto">
+                <div className="bg-white border border-slate-200/90 shadow-xl shadow-slate-200/50 rounded-3xl p-4 sm:p-6 md:p-10 space-y-6 sm:space-y-8 w-full max-w-2xl mx-auto max-h-[85vh] overflow-y-auto">
                     {/* Header Title */}
                     <div className="space-y-2 border-b border-slate-100 pb-6">
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-semibold">
@@ -451,130 +453,25 @@ export default function BukaTokoPage() {
                                     ></textarea>
                                 </div>
 
-                                {/* Input: Foto Logo / Profil Toko (Cloudinary Widget) */}
-                                <div className="space-y-1.5">
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                        Foto Logo / Profil Toko <span className="text-slate-400 font-normal">(Opsional)</span>
-                                    </label>
-                                    <div>
-                                        {logoUrl ? (
-                                            <div className="flex items-center gap-4 p-3 bg-slate-50 border border-slate-200 rounded-2xl">
-                                                <img
-                                                    src={logoUrl}
-                                                    alt="Preview Logo Toko"
-                                                    className="w-14 h-14 object-cover rounded-xl border border-slate-300 shadow-sm"
-                                                />
-                                                <div className="space-y-1">
-                                                    <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1">
-                                                        <span>✓</span> Logo Berhasil Diunggah
-                                                    </p>
-                                                    <CldUploadWidget
-                                                        uploadPreset="lora_toko"
-                                                        onSuccess={(result) => {
-                                                            if (typeof result.info !== 'string' && result.info?.secure_url) {
-                                                                setLogoUrl(result.info.secure_url);
-                                                            }
-                                                        }}
-                                                    >
-                                                        {({ open }) => (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => open()}
-                                                                className="text-xs font-bold text-terracotta hover:text-terracotta-hover underline cursor-pointer"
-                                                            >
-                                                                🔄 Ganti Foto Logo
-                                                            </button>
-                                                        )}
-                                                    </CldUploadWidget>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <CldUploadWidget
-                                                uploadPreset="lora_toko"
-                                                onSuccess={(result) => {
-                                                    if (typeof result.info !== 'string' && result.info?.secure_url) {
-                                                        setLogoUrl(result.info.secure_url);
-                                                    }
-                                                }}
-                                            >
-                                                {({ open }) => (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => open()}
-                                                        className="px-4 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
-                                                    >
-                                                        <span>📷</span>
-                                                        <span>Upload Logo Toko</span>
-                                                    </button>
-                                                )}
-                                            </CldUploadWidget>
-                                        )}
-                                    </div>
-                                    <p className="text-[11px] text-slate-400">
-                                        Format JPG, PNG, atau WEBP. Disarankan rasio 1:1.
-                                    </p>
-                                </div>
+                                {/* Input: Foto Logo / Profil Toko (Komponen ImageUpload dengan Pratinjau & Tombol Gunakan Foto Ini) */}
+                                <ImageUpload
+                                    value={logoUrl}
+                                    label="Foto Logo / Profil Toko (Opsional)"
+                                    helperText="Format JPG, PNG, atau WEBP. Disarankan rasio 1:1."
+                                    aspectRatio="square"
+                                    onConfirm={(url) => setLogoUrl(url)}
+                                    onRemove={() => setLogoUrl('')}
+                                />
 
-                                {/* Input: Foto Banner Toko (Cloudinary Widget) */}
-                                <div className="space-y-1.5">
-                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                        Foto Banner / Sampul Toko <span className="text-slate-400 font-normal">(Opsional)</span>
-                                    </label>
-                                    <div>
-                                        {bannerUrl ? (
-                                            <div className="relative border border-slate-200 rounded-2xl overflow-hidden group max-w-md">
-                                                <img
-                                                    src={bannerUrl}
-                                                    alt="Preview Banner Toko"
-                                                    className="w-full h-32 object-cover"
-                                                />
-                                                <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                    <CldUploadWidget
-                                                        uploadPreset="lora_toko"
-                                                        onSuccess={(result) => {
-                                                            if (typeof result.info !== 'string' && result.info?.secure_url) {
-                                                                setBannerUrl(result.info.secure_url);
-                                                            }
-                                                        }}
-                                                    >
-                                                        {({ open }) => (
-                                                            <button
-                                                                type="button"
-                                                                onClick={() => open()}
-                                                                className="px-4 py-2 bg-white/90 hover:bg-white text-slate-900 text-xs font-bold rounded-xl shadow cursor-pointer transition-all"
-                                                            >
-                                                                🔄 Ganti Foto Banner
-                                                            </button>
-                                                        )}
-                                                    </CldUploadWidget>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <CldUploadWidget
-                                                uploadPreset="lora_toko"
-                                                onSuccess={(result) => {
-                                                    if (typeof result.info !== 'string' && result.info?.secure_url) {
-                                                        setBannerUrl(result.info.secure_url);
-                                                    }
-                                                }}
-                                            >
-                                                {({ open }) => (
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => open()}
-                                                        className="w-full py-4 bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-300 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer border-dashed"
-                                                    >
-                                                        <span>🖼️</span>
-                                                        <span>Upload Banner Toko</span>
-                                                    </button>
-                                                )}
-                                            </CldUploadWidget>
-                                        )}
-                                    </div>
-                                    <p className="text-[11px] text-slate-400">
-                                        Format JPG, PNG, atau WEBP. Disarankan rasio lanskap (16:9 atau 3:1).
-                                    </p>
-                                </div>
+                                {/* Input: Foto Banner Toko (Komponen ImageUpload dengan Pratinjau & Tombol Gunakan Foto Ini) */}
+                                <ImageUpload
+                                    value={bannerUrl}
+                                    label="Foto Banner / Sampul Toko (Opsional)"
+                                    helperText="Format JPG, PNG, atau WEBP. Disarankan rasio 16:9."
+                                    aspectRatio="banner"
+                                    onConfirm={(url) => setBannerUrl(url)}
+                                    onRemove={() => setBannerUrl('')}
+                                />
                             </div>
                         </section>
 
@@ -591,109 +488,78 @@ export default function BukaTokoPage() {
                             </div>
 
                             <div className="space-y-4">
-                                {/* Form Grid untuk Cascading Dropdown (API Wilayah Indonesia) */}
+                                {/* Hidden Inputs untuk Mengirim Nilai ID & Nama Wilayah ke Server Action */}
+                                <input type="hidden" name="province_id" value={selectedProvince?.id || ''} />
+                                <input type="hidden" name="province_name" value={selectedProvince?.name || ''} />
+                                <input type="hidden" name="city_id" value={selectedCity?.id || ''} />
+                                <input type="hidden" name="city_name" value={selectedCity?.name || ''} />
+                                <input type="hidden" name="district_id" value={selectedDistrict?.id || ''} />
+                                <input type="hidden" name="district_name" value={selectedDistrict?.name || ''} />
+                                <input type="hidden" name="village_id" value={selectedVillage?.id || ''} />
+                                <input type="hidden" name="village_name" value={selectedVillage?.name || ''} />
+
+                                {/* Form Grid untuk Searchable Combobox Dropdowns (API Wilayah Indonesia) */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    {/* Dropdown 1: Provinsi */}
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="province_select" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                            Provinsi
-                                        </label>
-                                        <select
-                                            id="province_select"
-                                            value={selectedProvince?.id || ''}
-                                            onChange={handleProvinceChange}
-                                            disabled={loadingProvinces}
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-terracotta/40 focus:bg-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <option value="">{loadingProvinces ? 'Memuat Provinsi...' : '-- Pilih Provinsi --'}</option>
-                                            {provinces.map((prov) => (
-                                                <option key={prov.id} value={prov.id}>
-                                                    {prov.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    {/* Combobox 1: Provinsi */}
+                                    <Combobox
+                                        label="Provinsi"
+                                        options={provinces}
+                                        value={selectedProvince}
+                                        onChange={(opt) => {
+                                            setSelectedProvince(opt);
+                                            setSelectedCity(null);
+                                            setSelectedDistrict(null);
+                                            setSelectedVillage(null);
+                                        }}
+                                        placeholder="Pilih Provinsi..."
+                                        searchPlaceholder="Cari Provinsi..."
+                                        loading={loadingProvinces}
+                                    />
 
-                                    {/* Dropdown 2: Kota / Kabupaten */}
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="city_select" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                            Kota / Kabupaten
-                                        </label>
-                                        <select
-                                            id="city_select"
-                                            value={selectedCity?.id || ''}
-                                            onChange={handleCityChange}
-                                            disabled={!selectedProvince || loadingCities}
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-terracotta/40 focus:bg-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <option value="">
-                                                {loadingCities
-                                                    ? 'Memuat Kota/Kabupaten...'
-                                                    : !selectedProvince
-                                                        ? '-- Pilih Provinsi Terlebih Dahulu --'
-                                                        : '-- Pilih Kota / Kabupaten --'}
-                                            </option>
-                                            {cities.map((city) => (
-                                                <option key={city.id} value={city.id}>
-                                                    {city.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    {/* Combobox 2: Kota / Kabupaten */}
+                                    <Combobox
+                                        label="Kota / Kabupaten"
+                                        options={cities}
+                                        value={selectedCity}
+                                        onChange={(opt) => {
+                                            setSelectedCity(opt ? { ...opt, province_id: selectedProvince?.id || '' } : null);
+                                            setSelectedDistrict(null);
+                                            setSelectedVillage(null);
+                                        }}
+                                        placeholder={selectedProvince ? 'Pilih Kota/Kabupaten...' : 'Pilih Provinsi terlebih dahulu'}
+                                        searchPlaceholder="Cari Kota/Kabupaten..."
+                                        disabled={!selectedProvince}
+                                        loading={loadingCities}
+                                    />
 
-                                    {/* Dropdown 3: Kecamatan */}
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="district_select" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                            Kecamatan
-                                        </label>
-                                        <select
-                                            id="district_select"
-                                            value={selectedDistrict?.id || ''}
-                                            onChange={handleDistrictChange}
-                                            disabled={!selectedCity || loadingDistricts}
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-terracotta/40 focus:bg-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <option value="">
-                                                {loadingDistricts
-                                                    ? 'Memuat Kecamatan...'
-                                                    : !selectedCity
-                                                        ? '-- Pilih Kota Terlebih Dahulu --'
-                                                        : '-- Pilih Kecamatan --'}
-                                            </option>
-                                            {districts.map((dist) => (
-                                                <option key={dist.id} value={dist.id}>
-                                                    {dist.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    {/* Combobox 3: Kecamatan */}
+                                    <Combobox
+                                        label="Kecamatan"
+                                        options={districts}
+                                        value={selectedDistrict}
+                                        onChange={(opt) => {
+                                            setSelectedDistrict(opt ? { ...opt, regency_id: selectedCity?.id || '' } : null);
+                                            setSelectedVillage(null);
+                                        }}
+                                        placeholder={selectedCity ? 'Pilih Kecamatan...' : 'Pilih Kota terlebih dahulu'}
+                                        searchPlaceholder="Cari Kecamatan..."
+                                        disabled={!selectedCity}
+                                        loading={loadingDistricts}
+                                    />
 
-                                    {/* Dropdown 4: Kelurahan / Desa */}
-                                    <div className="space-y-1.5">
-                                        <label htmlFor="village_select" className="block text-xs font-bold uppercase tracking-wider text-slate-700">
-                                            Kelurahan / Desa
-                                        </label>
-                                        <select
-                                            id="village_select"
-                                            value={selectedVillage?.id || ''}
-                                            onChange={handleVillageChange}
-                                            disabled={!selectedDistrict || loadingVillages}
-                                            className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-terracotta/40 focus:bg-white transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                                        >
-                                            <option value="">
-                                                {loadingVillages
-                                                    ? 'Memuat Kelurahan/Desa...'
-                                                    : !selectedDistrict
-                                                        ? '-- Pilih Kecamatan Terlebih Dahulu --'
-                                                        : '-- Pilih Kelurahan / Desa --'}
-                                            </option>
-                                            {villages.map((vill) => (
-                                                <option key={vill.id} value={vill.id}>
-                                                    {vill.name}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                    {/* Combobox 4: Kelurahan / Desa */}
+                                    <Combobox
+                                        label="Kelurahan / Desa"
+                                        options={villages}
+                                        value={selectedVillage}
+                                        onChange={(opt) => {
+                                            setSelectedVillage(opt ? { ...opt, district_id: selectedDistrict?.id || '' } : null);
+                                        }}
+                                        placeholder={selectedDistrict ? 'Pilih Kelurahan/Desa...' : 'Pilih Kecamatan terlebih dahulu'}
+                                        searchPlaceholder="Cari Kelurahan/Desa..."
+                                        disabled={!selectedDistrict}
+                                        loading={loadingVillages}
+                                    />
                                 </div>
 
                                 {/* Input: Tautan Google Maps */}

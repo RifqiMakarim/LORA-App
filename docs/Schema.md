@@ -103,6 +103,8 @@ CREATE TABLE IF NOT EXISTS public.orders (
   payment_method TEXT DEFAULT 'qris',
   temanqris_transaction_id TEXT, 
   temanqris_qr_code TEXT, 
+  wa_token TEXT,
+  short_id TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
