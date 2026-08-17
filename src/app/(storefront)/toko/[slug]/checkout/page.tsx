@@ -48,6 +48,13 @@ export default function DedicatedCheckoutPage() {
 
     const storeTitle = currentStoreName || slug.replace(/-/g, ' ').toUpperCase();
 
+    // Guard: prevent checkout route/store mismatch with the global cart state
+    useEffect(() => {
+        if (!isPaymentSuccess && currentStoreSlug && slug && slug !== currentStoreSlug) {
+            toast.error('Keranjang aktif berasal dari toko lain. Anda dialihkan ke checkout toko yang benar.');
+            router.replace(`/toko/${currentStoreSlug}/checkout`);
+        }
+    }, [currentStoreSlug, slug, router, isPaymentSuccess]);
     // Fungsi Fetch ke Internal API Route /api/qris untuk mendapatkan Base64 qr_image
     const fetchQrisData = useCallback(async () => {
         if (cartTotal <= 0) return;

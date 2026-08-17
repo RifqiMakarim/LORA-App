@@ -234,7 +234,7 @@ export default function DashboardShell({
                             </h1>
                             <span className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1">
                                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>Toko Toko Aktif</span>
+                                <span>Toko Aktif</span>
                             </span>
                         </div>
                     </div>
