@@ -83,8 +83,18 @@ export async function registerBusiness(
     const address = (formData.get('address') as string || '').trim();
     const google_maps_link = (formData.get('google_maps_link') as string || '').trim();
 
+    // Tangkap data Metode Pembayaran (QRIS & Rekening Bank)
+    const qris_image_url = (formData.get('qris_image_url') as string || '').trim();
+    const bank_name = (formData.get('bank_name') as string || '').trim();
+    const bank_account_number = (formData.get('bank_account_number') as string || '').trim();
+
     if (!name) {
         return { error: 'Nama Toko wajib diisi.' };
+    }
+
+    // Validasi Metode Pembayaran (Minimal salah satu: QRIS atau Bank)
+    if (!qris_image_url && (!bank_name || !bank_account_number)) {
+        return { error: 'Harap lengkapi metode pembayaran! Unggah QRIS atau isi detail Rekening Bank.' };
     }
 
     // 4. Generate slug otomatis menggunakan regex
@@ -101,6 +111,9 @@ export async function registerBusiness(
         description: description || null,
         logo_url: logo_url || null,
         banner_url: banner_url || null,
+        qris_image_url: qris_image_url || null,
+        bank_name: bank_name || null,
+        bank_account_number: bank_account_number || null,
         contact_number: contactNumber,
         province_id: province_id || null,
         province_name: province_name || null,

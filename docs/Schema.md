@@ -69,6 +69,9 @@ CREATE TABLE IF NOT EXISTS public.businesses (
   contact_number TEXT, 
   logo_url TEXT, 
   banner_url TEXT, 
+  qris_image_url TEXT,
+  bank_name TEXT,
+  bank_account_number TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );

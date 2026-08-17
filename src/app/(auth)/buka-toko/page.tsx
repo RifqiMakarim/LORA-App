@@ -3,7 +3,20 @@
 import { useActionState, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { CldUploadWidget } from 'next-cloudinary';
+import Swal from 'sweetalert2';
 import { registerBusiness } from '@/app/actions/business';
+
+// Opsi Bank Populer di Indonesia
+const BANK_OPTIONS = [
+    'BCA',
+    'Mandiri',
+    'BNI',
+    'BRI',
+    'BSI',
+    'CIMB Niaga',
+    'BJB',
+    'Lainnya',
+];
 
 // Tipe Data Wilayah Indonesia (API EMSIFA)
 type Province = { id: string; name: string };
@@ -17,6 +30,14 @@ export default function BukaTokoPage() {
     // State Local untuk Cloudinary Image Upload
     const [logoUrl, setLogoUrl] = useState<string>('');
     const [bannerUrl, setBannerUrl] = useState<string>('');
+
+    // State Local untuk Metode Pembayaran (QRIS & Rekening Bank)
+    const [qrisFile, setQrisFile] = useState<File | null>(null);
+    const [qrisPreviewUrl, setQrisPreviewUrl] = useState<string>('');
+    const [qrisImageUrl, setQrisImageUrl] = useState<string>('');
+    const [isUploadingQris, setIsUploadingQris] = useState<boolean>(false);
+    const [bankName, setBankName] = useState<string>('');
+    const [bankAccountNumber, setBankAccountNumber] = useState<string>('');
 
     // 1. State Daftar Wilayah (Array)
     const [provinces, setProvinces] = useState<Province[]>([]);
@@ -161,6 +182,174 @@ export default function BukaTokoPage() {
         setSelectedVillage(found);
     };
 
+    // Handler Unggah File QRIS ke Cloudinary
+    const handleQrisFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+            Swal.fire({
+                title: 'Format File Salah',
+                text: 'Silakan unggah file gambar (JPG, PNG, atau WebP)',
+                icon: 'warning',
+                confirmButtonColor: '#D97706',
+                confirmButtonText: 'Mengerti',
+                customClass: {
+                    popup: 'rounded-3xl font-sans',
+                    confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+                },
+            });
+            return;
+        }
+
+        if (file.size > 5 * 1024 * 1024) {
+            Swal.fire({
+                title: 'Ukuran Gambar Terlalu Besar',
+                text: 'Ukuran file gambar QRIS maksimal 5 MB',
+                icon: 'warning',
+                confirmButtonColor: '#D97706',
+                confirmButtonText: 'Mengerti',
+                customClass: {
+                    popup: 'rounded-3xl font-sans',
+                    confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+                },
+            });
+            return;
+        }
+
+        setQrisFile(file);
+        const previewUrl = URL.createObjectURL(file);
+        setQrisPreviewUrl(previewUrl);
+
+        // Upload otomatis ke Cloudinary
+        setIsUploadingQris(true);
+        try {
+            const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'p2jfvcqi';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'lora_toko');
+
+            const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!response.ok) {
+                throw new Error('Gagal mengunggah gambar QRIS ke Cloudinary.');
+            }
+
+            const data = await response.json();
+            setQrisImageUrl(data.secure_url);
+        } catch (err: any) {
+            console.error('Gagal mengunggah QRIS:', err);
+            Swal.fire({
+                title: 'Gagal Unggah QRIS',
+                text: err.message || 'Terjadi kesalahan saat mengunggah gambar QRIS.',
+                icon: 'error',
+                confirmButtonColor: '#D97706',
+                confirmButtonText: 'Mengerti',
+                customClass: {
+                    popup: 'rounded-3xl font-sans',
+                    confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+                },
+            });
+        } finally {
+            setIsUploadingQris(false);
+        }
+    };
+
+    // Handler Hapus QRIS
+    const handleRemoveQris = () => {
+        setQrisFile(null);
+        setQrisPreviewUrl('');
+        setQrisImageUrl('');
+    };
+
+    // Handler Validasi Form Sebelum Submit (Wajib QRIS atau Rekening Bank)
+    const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        const hasQris = !!qrisFile || !!qrisImageUrl;
+        const hasBank = !!bankName.trim() && !!bankAccountNumber.trim();
+
+        if (!hasQris && !hasBank) {
+            e.preventDefault();
+            Swal.fire({
+                title: 'Metode Pembayaran Wajib',
+                text: 'Harap lengkapi metode pembayaran! Unggah QRIS atau isi detail Rekening Bank.',
+                icon: 'warning',
+                confirmButtonColor: '#D97706',
+                confirmButtonText: 'Mengerti',
+                customClass: {
+                    popup: 'rounded-3xl font-sans',
+                    confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+                },
+            });
+            return;
+        }
+
+        // Jika QRIS dipilih tapi upload Cloudinary belum selesai
+        if (qrisFile && !qrisImageUrl) {
+            if (isUploadingQris) {
+                e.preventDefault();
+                Swal.fire({
+                    title: 'Mengunggah Gambar QRIS',
+                    text: 'Mohon tunggu sebentar, gambar QRIS sedang diunggah ke Cloudinary...',
+                    icon: 'info',
+                    confirmButtonColor: '#D97706',
+                    confirmButtonText: 'Mengerti',
+                    customClass: {
+                        popup: 'rounded-3xl font-sans',
+                        confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+                    },
+                });
+                return;
+            }
+
+            // Upaya upload ulang jika sebelumnya pending/gagal
+            e.preventDefault();
+            try {
+                setIsUploadingQris(true);
+                const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'p2jfvcqi';
+                const formData = new FormData();
+                formData.append('file', qrisFile);
+                formData.append('upload_preset', 'lora_toko');
+
+                const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    throw new Error('Gagal mengunggah gambar QRIS ke Cloudinary.');
+                }
+
+                const data = await response.json();
+                const uploadedUrl = data.secure_url;
+                setQrisImageUrl(uploadedUrl);
+                setIsUploadingQris(false);
+
+                const formElement = e.currentTarget;
+                const hiddenInput = formElement.querySelector<HTMLInputElement>('input[name="qris_image_url"]');
+                if (hiddenInput) {
+                    hiddenInput.value = uploadedUrl;
+                }
+                formElement.requestSubmit();
+            } catch (err: any) {
+                setIsUploadingQris(false);
+                Swal.fire({
+                    title: 'Gagal Unggah QRIS',
+                    text: err.message || 'Terjadi kesalahan saat mengunggah QRIS.',
+                    icon: 'error',
+                    confirmButtonColor: '#D97706',
+                    confirmButtonText: 'Mengerti',
+                    customClass: {
+                        popup: 'rounded-3xl font-sans',
+                        confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
+                    },
+                });
+            }
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-terracotta selection:text-white flex flex-col justify-between py-10 px-4 sm:px-6">
             {/* Main Form Container */}
@@ -201,10 +390,11 @@ export default function BukaTokoPage() {
                     )}
 
                     {/* Registration Form */}
-                    <form action={formAction} className="space-y-8">
-                        {/* Hidden Inputs untuk Mengirimkan URL Foto Logo & Banner ke Server Action */}
+                    <form action={formAction} onSubmit={handleSubmit} className="space-y-8">
+                        {/* Hidden Inputs untuk Mengirimkan URL Foto Logo, Banner, & QRIS ke Server Action */}
                         <input type="hidden" name="logo_url" value={logoUrl} />
                         <input type="hidden" name="banner_url" value={bannerUrl} />
+                        <input type="hidden" name="qris_image_url" value={qrisImageUrl} />
 
                         {/* Hidden Inputs untuk Menyisipkan Data ID & Nama Wilayah ke Server Action */}
                         <input type="hidden" name="province_id" value={selectedProvince?.id || ''} />
@@ -535,6 +725,136 @@ export default function BukaTokoPage() {
                                         placeholder="Tuliskan alamat lengkap beserta patokan toko Anda..."
                                         className="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/40 focus:bg-white transition-all resize-none"
                                     ></textarea>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* BAGIAN 3: METODE PEMBAYARAN */}
+                        <section className="space-y-5 pt-2">
+                            <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
+                                <span className="flex items-center justify-center w-7 h-7 bg-terracotta/10 text-terracotta rounded-full font-bold text-xs">
+                                    3
+                                </span>
+                                <div>
+                                    <h2 className="text-base font-bold text-slate-900">
+                                        Metode Pembayaran <span className="text-xs font-normal text-rose-500">(Wajib isi minimal salah satu)</span>
+                                    </h2>
+                                    <p className="text-xs text-slate-500">
+                                        Unggah gambar QRIS toko atau isi detail Rekening Bank untuk penerimaan pembayaran transaksi
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div className="space-y-6">
+                                {/* Input 1: QRIS */}
+                                <div className="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                    <div className="flex items-center justify-between">
+                                        <label htmlFor="qris_file_input" className="block text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                                            <span>📱</span>
+                                            <span>1. Unggah Gambar QRIS</span>
+                                            <span className="text-[10px] text-slate-400 font-normal lowercase">(opsional jika ada rekening bank)</span>
+                                        </label>
+                                    </div>
+
+                                    <div>
+                                        {qrisPreviewUrl || qrisImageUrl ? (
+                                            <div className="flex flex-col sm:flex-row items-center gap-4 p-3 bg-white border border-slate-200 rounded-xl">
+                                                <img
+                                                    src={qrisPreviewUrl || qrisImageUrl}
+                                                    alt="Preview QRIS Toko"
+                                                    className="w-32 h-32 object-contain bg-white p-2 border border-slate-200 rounded-lg shadow-sm"
+                                                />
+                                                <div className="space-y-2 text-center sm:text-left">
+                                                    <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1 justify-center sm:justify-start">
+                                                        <span>✓</span> Gambar QRIS Siap
+                                                        {isUploadingQris && <span className="text-amber-600 text-[11px] font-normal animate-pulse">(Mengunggah...)</span>}
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-500 truncate max-w-xs">
+                                                        {qrisFile ? qrisFile.name : 'Gambar QRIS berhasil diunggah'}
+                                                    </p>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleRemoveQris}
+                                                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                                                    >
+                                                        <span>🗑️</span> Hapus Gambar QRIS
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="relative">
+                                                <input
+                                                    type="file"
+                                                    id="qris_file_input"
+                                                    accept="image/*"
+                                                    onChange={handleQrisFileChange}
+                                                    className="hidden"
+                                                />
+                                                <label
+                                                    htmlFor="qris_file_input"
+                                                    className="flex flex-col items-center justify-center p-6 bg-white border-2 border-dashed border-slate-300 hover:border-terracotta rounded-xl cursor-pointer transition-all hover:bg-amber-50/30 text-center group"
+                                                >
+                                                    <div className="w-12 h-12 bg-amber-50 group-hover:bg-terracotta/10 text-amber-600 group-hover:text-terracotta rounded-full flex items-center justify-center mb-2 transition-colors">
+                                                        <span className="text-xl">📷</span>
+                                                    </div>
+                                                    <p className="text-xs font-bold text-slate-800">
+                                                        Klik untuk Unggah Gambar QRIS Toko
+                                                    </p>
+                                                    <p className="text-[11px] text-slate-400 mt-0.5">
+                                                        Format JPG, PNG, atau WEBP (Maksimal 5MB)
+                                                    </p>
+                                                </label>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Input 2 & 3: Rekening Bank */}
+                                <div className="space-y-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
+                                    <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                                        <span>🏦</span>
+                                        <span>2 & 3. Detail Rekening Bank</span>
+                                        <span className="text-[10px] text-slate-400 font-normal lowercase">(opsional jika sudah mengunggah QRIS)</span>
+                                    </label>
+
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        {/* Input 2: Dropdown (Select) Bank Name */}
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="bank_name" className="block text-xs font-semibold text-slate-700">
+                                                Nama Bank
+                                            </label>
+                                            <select
+                                                id="bank_name"
+                                                name="bank_name"
+                                                value={bankName}
+                                                onChange={(e) => setBankName(e.target.value)}
+                                                className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-terracotta/40 transition-all cursor-pointer"
+                                            >
+                                                <option value="">-- Pilih Bank --</option>
+                                                {BANK_OPTIONS.map((bank) => (
+                                                    <option key={bank} value={bank}>
+                                                        {bank}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Input 3: Nomor Rekening Bank */}
+                                        <div className="space-y-1.5">
+                                            <label htmlFor="bank_account_number" className="block text-xs font-semibold text-slate-700">
+                                                Nomor Rekening Bank
+                                            </label>
+                                            <input
+                                                type="text"
+                                                id="bank_account_number"
+                                                name="bank_account_number"
+                                                value={bankAccountNumber}
+                                                onChange={(e) => setBankAccountNumber(e.target.value)}
+                                                placeholder="Contoh: 1234567890"
+                                                className="w-full px-4 py-3 bg-white border border-slate-300 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/40 transition-all"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </section>
