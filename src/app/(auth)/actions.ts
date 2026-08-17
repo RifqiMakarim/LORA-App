@@ -4,14 +4,22 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-// 1. Fungsi Registrasi (Sign Up - Default Pembeli)
-export async function signup(formData: FormData) {
+export type AuthState = {
+    error?: string;
+} | null;
+
+// 1. Fungsi Registrasi (Sign Up - Default Pembeli Gaya Shopee)
+export async function signup(prevState: AuthState, formData: FormData): Promise<AuthState> {
     const supabase = await createClient()
 
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const fullName = formData.get('fullName') as string
     const phone = formData.get('phone') as string
+
+    if (!email || !password || !fullName) {
+        return { error: 'Mohon lengkapi semua kolom wajib.' }
+    }
 
     const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
@@ -28,9 +36,9 @@ export async function signup(formData: FormData) {
             {
                 id: authData.user.id,
                 full_name: fullName,
-                phone_number: phone,
-                is_buyer: true,   // Otomatis menjadi pembeli
-                is_seller: false, // Belum punya toko saat pertama kali daftar
+                phone_number: phone || null,
+                is_buyer: true,   // Default Pembeli (Shopee Style)
+                is_seller: false, // Belum aktif sebagai seller
             }
         ])
 
@@ -40,15 +48,19 @@ export async function signup(formData: FormData) {
     }
 
     revalidatePath('/', 'layout')
-    redirect('/') // Arahkan ke halaman beranda pembeli
+    redirect('/')
 }
 
 // 2. Fungsi Masuk (Log In)
-export async function login(formData: FormData) {
+export async function login(prevState: AuthState, formData: FormData): Promise<AuthState> {
     const supabase = await createClient()
 
     const email = formData.get('email') as string
     const password = formData.get('password') as string
+
+    if (!email || !password) {
+        return { error: 'Email dan kata sandi wajib diisi.' }
+    }
 
     const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -60,12 +72,32 @@ export async function login(formData: FormData) {
     }
 
     revalidatePath('/', 'layout')
-    redirect('/') // Untuk sementara arahkan ke beranda 
+    redirect('/')
 }
 
 // 3. Fungsi Keluar (Log Out)
 export async function logout() {
     const supabase = await createClient()
     await supabase.auth.signOut()
-    redirect('/login')
+    revalidatePath('/', 'layout')
+    redirect('/')
+}
+
+// 4. Fungsi Login via Google OAuth SSO (FR-001)
+export async function loginWithGoogle() {
+    const supabase = await createClient()
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+            redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/callback`,
+        },
+    })
+
+    if (error) {
+        return { error: error.message }
+    }
+
+    if (data?.url) {
+        redirect(data.url)
+    }
 }

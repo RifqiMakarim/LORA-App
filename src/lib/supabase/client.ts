@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createBrowserClient } from '@supabase/ssr';
 
 // Mengambil URL dan Key dari file .env.local
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
@@ -9,5 +9,5 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('Supabase URL atau Anon Key belum dikonfigurasi di file .env.local');
 }
 
-// Mengekspor instance client agar bisa dipakai di seluruh komponen aplikasi
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Mengekspor instance browser client agar sesi cookie tersinkronisasi otomatis dengan server
+export const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
