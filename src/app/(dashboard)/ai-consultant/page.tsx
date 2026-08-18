@@ -7,12 +7,12 @@ import {
   Bot, 
   User, 
   RefreshCw, 
-  HelpCircle, 
   ShoppingBag, 
   AlertTriangle, 
   TrendingUp, 
   Users 
 } from 'lucide-react';
+import { MarkdownRenderer } from '@/components/ai/MarkdownRenderer';
 
 interface ChatMessage {
   id: string;
@@ -141,7 +141,7 @@ export default function AiConsultantPage() {
             <Sparkles className="w-6 h-6 animate-pulse" />
           </div>
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white">
+            <h1 className="text-xl md:text-2xl font-bold text-indigo-950 dark:text-indigo-950">
               AI Business Consultant
             </h1>
             <p className="text-xs text-slate-500">
@@ -213,7 +213,11 @@ export default function AiConsultantPage() {
                   ? 'bg-amber-600 text-white rounded-tr-xs shadow-md' 
                   : 'bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-tl-xs border border-slate-200 dark:border-slate-800'
               }`}>
-                <div className="whitespace-pre-wrap font-sans">{msg.content}</div>
+                {isUser ? (
+                  <div className="whitespace-pre-wrap font-sans">{msg.content}</div>
+                ) : (
+                  <MarkdownRenderer content={msg.content} />
+                )}
                 <div className={`text-[10px] mt-1.5 text-right ${isUser ? 'text-amber-200' : 'text-slate-400'}`}>
                   {msg.timestamp}
                 </div>
