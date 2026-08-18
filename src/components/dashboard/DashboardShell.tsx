@@ -17,7 +17,8 @@ import {
     X,
     LogOut,
     ChevronRight,
-    MapPin
+    MapPin,
+    Shield
 } from 'lucide-react';
 import { logout } from '@/app/(auth)/actions';
 
@@ -31,6 +32,7 @@ interface DashboardShellProps {
         full_name?: string | null;
         avatar_url?: string | null;
         is_seller?: boolean | null;
+        is_admin?: boolean | null;
     } | null;
     business?: {
         name?: string | null;
@@ -41,7 +43,14 @@ interface DashboardShellProps {
     } | null;
 }
 
-const navItems = [
+interface NavItem {
+    name: string;
+    href: string;
+    icon: React.ComponentType<any>;
+    badge?: string;
+}
+
+const navItems: NavItem[] = [
     {
         name: 'Beranda Dashboard',
         href: '/dashboard',
@@ -80,6 +89,29 @@ const navItems = [
     },
 ];
 
+const adminNavItems: NavItem[] = [
+    {
+        name: 'Statistik Admin',
+        href: '/admin',
+        icon: LayoutDashboard,
+    },
+    {
+        name: 'Kelola Event',
+        href: '/admin/events',
+        icon: Calendar,
+    },
+    {
+        name: 'Pengguna & Toko',
+        href: '/admin/users-stores',
+        icon: Store,
+    },
+    {
+        name: 'Pengaturan Admin',
+        href: '/admin/settings',
+        icon: Settings,
+    },
+];
+
 export default function DashboardShell({
     children,
     user,
@@ -89,11 +121,14 @@ export default function DashboardShell({
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-    const userName = profile?.full_name || user?.email?.split('@')[0] || 'Pemilik UMKM';
-    const shopName = business?.name || 'Toko UMKM Saya';
-    const locationText = business?.city_name
-        ? `${business.city_name}, ${business.province_name || ''}`
-        : 'DIY & Jawa Tengah';
+    const isAdminRoute = pathname.startsWith('/admin');
+    const activeNavItems = isAdminRoute ? adminNavItems : navItems;
+
+    const userName = profile?.full_name || user?.email?.split('@')[0] || 'Pengguna LORA';
+    const shopName = isAdminRoute ? 'LORA System Administration' : (business?.name || 'Toko UMKM Saya');
+    const locationText = isAdminRoute 
+        ? 'Pusat Kendali LORA' 
+        : (business?.city_name ? `${business.city_name}, ${business.province_name || ''}` : 'DIY & Jawa Tengah');
 
     return (
         <div className="min-h-screen bg-slate-50 flex font-sans text-slate-900 selection:bg-terracotta selection:text-white">
@@ -113,16 +148,16 @@ export default function DashboardShell({
                 {/* Header Sidebar: Brand LORA Seller Centre */}
                 <div className="p-5 border-b border-slate-800 space-y-4">
                     <div className="flex items-center justify-between">
-                        <Link href="/dashboard" className="flex items-center gap-2.5 group">
-                            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-terracotta to-amber-500 flex items-center justify-center shadow-lg shadow-terracotta/20 group-hover:scale-105 transition-transform">
+                        <Link href={isAdminRoute ? "/admin" : "/dashboard"} className="flex items-center gap-2.5 group">
+                            <div className={`w-9 h-9 rounded-2xl bg-gradient-to-tr ${isAdminRoute ? 'from-emerald-600 to-teal-400 shadow-emerald-500/20' : 'from-terracotta to-amber-500 shadow-terracotta/20'} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
                                 <span className="text-white font-extrabold text-base tracking-wider font-outfit">L</span>
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-lg font-outfit font-black tracking-tight text-white leading-none">
                                     LORA
                                 </span>
-                                <span className="text-[10px] font-bold text-amber-400 tracking-widest uppercase mt-0.5">
-                                    Seller Centre
+                                <span className={`text-[10px] font-bold ${isAdminRoute ? 'text-emerald-400' : 'text-amber-400'} tracking-widest uppercase mt-0.5`}>
+                                    {isAdminRoute ? 'Admin Panel' : 'Seller Centre'}
                                 </span>
                             </div>
                         </Link>
@@ -137,7 +172,11 @@ export default function DashboardShell({
 
                     {/* Shop Profile Info Card Box in Sidebar */}
                     <div className="p-3 bg-slate-800/80 rounded-2xl border border-slate-700/60 flex items-center gap-3">
-                        {business?.logo_url ? (
+                        {isAdminRoute ? (
+                            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center font-bold text-sm">
+                                <Shield className="w-5 h-5" />
+                            </div>
+                        ) : business?.logo_url ? (
                             <img
                                 src={business.logo_url}
                                 alt={shopName}
@@ -158,14 +197,14 @@ export default function DashboardShell({
                     </div>
                 </div>
 
-                {/* Navigasi Utama Seller Centre */}
+                {/* Navigasi Utama Seller/Admin Centre */}
                 <nav className="flex-1 overflow-y-auto p-3 space-y-1.5 scrollbar-thin">
                     <p className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2">
-                        Menu Manajemen Toko
+                        {isAdminRoute ? 'Menu Sistem Admin' : 'Menu Manajemen Toko'}
                     </p>
-                    {navItems.map((item) => {
+                    {activeNavItems.map((item) => {
                         const Icon = item.icon;
-                        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href));
+                        const isActive = pathname === item.href || (item.href !== '/dashboard' && item.href !== '/admin' && pathname.startsWith(item.href));
 
                         return (
                             <Link
@@ -173,13 +212,13 @@ export default function DashboardShell({
                                 href={item.href}
                                 onClick={() => setIsMobileOpen(false)}
                                 className={`flex items-center justify-between px-3.5 py-2.5 rounded-2xl text-xs font-bold transition-all group ${isActive
-                                        ? 'bg-terracotta text-white shadow-md shadow-terracotta/25'
+                                        ? (isAdminRoute ? 'bg-emerald-600 text-white shadow-md shadow-emerald-650/25' : 'bg-terracotta text-white shadow-md shadow-terracotta/25')
                                         : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
                                     }`}
                             >
                                 <div className="flex items-center gap-3">
                                     <Icon
-                                        className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-amber-400'
+                                        className={`w-4 h-4 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : `text-slate-400 group-hover:${isAdminRoute ? 'text-emerald-400' : 'text-amber-400'}`
                                             }`}
                                     />
                                     <span>{item.name}</span>
@@ -218,6 +257,31 @@ export default function DashboardShell({
                         <span>Kembali ke Katalog Utama</span>
                     </Link>
 
+                    {/* 3. Switch View Button (Admins only) */}
+                    {profile?.is_admin && (
+                        <div className="pt-1.5 border-t border-slate-800">
+                            {isAdminRoute ? (
+                                <Link
+                                    href="/dashboard"
+                                    className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-amber-300 hover:text-white hover:bg-slate-800 rounded-2xl transition-all group border border-amber-500/20"
+                                    title="Masuk ke Dashboard Toko Seller Centre"
+                                >
+                                    <Store className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+                                    <span>Masuk Seller Centre</span>
+                                </Link>
+                            ) : (
+                                <Link
+                                    href="/admin"
+                                    className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-350 hover:text-white hover:bg-slate-800 rounded-2xl transition-all group border border-emerald-500/20"
+                                    title="Masuk ke Panel Pengaturan Utama Admin"
+                                >
+                                    <Settings className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                                    <span>Masuk Admin Panel</span>
+                                </Link>
+                            )}
+                        </div>
+                    )}
+
                     {/* Quick Logout */}
                     <form action={logout} onSubmit={() => { if (typeof window !== 'undefined') localStorage.removeItem('lora_global_cart'); }}>
                         <button
@@ -225,7 +289,7 @@ export default function DashboardShell({
                             className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl transition-all cursor-pointer text-left"
                         >
                             <LogOut className="w-3.5 h-3.5" />
-                            <span>Keluar dari Seller</span>
+                            <span>Keluar Akun</span>
                         </button>
                     </form>
                 </div>
@@ -250,8 +314,8 @@ export default function DashboardShell({
                                 {shopName}
                             </h1>
                             <span className="text-[11px] text-slate-500 font-medium mt-0.5 flex items-center gap-1">
-                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                                <span>Toko Aktif</span>
+                                <span className={`w-1.5 h-1.5 rounded-full ${isAdminRoute ? 'bg-blue-500' : 'bg-emerald-500'}`}></span>
+                                <span>{isAdminRoute ? 'Admin Aktif' : 'Toko Aktif'}</span>
                             </span>
                         </div>
                     </div>
@@ -260,8 +324,8 @@ export default function DashboardShell({
                     <div className="flex items-center gap-3">
                         <div className="hidden sm:flex flex-col items-end text-right">
                             <span className="text-xs font-bold text-slate-900">{userName}</span>
-                            <span className="text-[10px] text-amber-700 font-semibold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/70">
-                                Seller / Pemilik UMKM
+                            <span className={`text-[10px] ${isAdminRoute ? 'text-emerald-700 bg-emerald-50 border-emerald-250/70' : 'text-amber-700 bg-amber-50 border-amber-200/70'} font-semibold px-2 py-0.5 rounded-md border`}>
+                                {isAdminRoute ? 'System Administrator' : 'Seller / Pemilik UMKM'}
                             </span>
                         </div>
 
