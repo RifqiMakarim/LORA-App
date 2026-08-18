@@ -13,19 +13,24 @@ export interface HoltWintersParams {
   gamma: number;  // seasonal smoothing (0-1)
 }
 
+export interface AssociatedEventInfo {
+  id: string;
+  title: string;
+  province_name: string;
+  city_name?: string | null;
+  impact: 'low' | 'medium' | 'high' | 'massive';
+}
+
 export interface ForecastPoint {
   date: string;
   is_projected: boolean;
   predicted_sales: number;
   confidence_lower: number;
   confidence_upper: number;
-  associated_event?: {
-    id: string;
-    title: string;
-    province_name: string;
-    city_name?: string | null;
-    impact: 'low' | 'medium' | 'high' | 'massive';
-  };
+  predicted_orders: number;
+  orders_confidence_lower: number;
+  orders_confidence_upper: number;
+  associated_event?: AssociatedEventInfo;
 }
 
 export interface LocalEventInput {
@@ -36,6 +41,22 @@ export interface LocalEventInput {
   start_date: string;
   end_date: string;
   expected_tourist_impact: 'low' | 'medium' | 'high' | 'massive';
+  description?: string | null;
+}
+
+export interface DailyStockRecommendation {
+  date: string;
+  day_label: string; // e.g. "Jumat, 20 Agustus"
+  status: 'busy' | 'quiet' | 'normal';
+  percentage_diff: number; // e.g. +28 or -35
+  action_text: string;
+  associated_event?: AssociatedEventInfo;
+}
+
+export interface DaysClassificationSummary {
+  count: number;
+  days_label: string; // e.g. "Jum 20, Sen 23, Sel 24 (+2 lainnya)"
+  days_list: string[];
 }
 
 export interface SalesForecastResult {
@@ -51,7 +72,11 @@ export interface SalesForecastResult {
   historical_data: DailySalesPoint[];
   forecast_data: ForecastPoint[];
   total_projected_revenue: number;
+  total_projected_orders: number;
   growth_percentage: number;
+  busy_summary: DaysClassificationSummary;
+  quiet_summary: DaysClassificationSummary;
+  daily_stock_recommendations: DailyStockRecommendation[];
   auto_insight: string;
   ai_qualitative_note?: string;
 }
@@ -98,6 +123,9 @@ export function determineConfidenceLevel(dataDays: number): ConfidenceLevel {
   return 'high';
 }
 
+/**
+ * Holt-Winters Additive Method dengan Seasonality = 7 hari
+ */
 export function holtWintersForecast(
   series: number[], 
   params: HoltWintersParams, 
@@ -109,18 +137,21 @@ export function holtWintersForecast(
     return { predictions: [], fittedValues: [] };
   }
 
+  // 1. Inisialisasi Level
   let level = 0;
   for (let i = 0; i < seasonLength; i++) {
     level += series[i];
   }
   level /= seasonLength;
 
+  // 2. Inisialisasi Trend
   let trend = 0;
   for (let i = 0; i < seasonLength; i++) {
     trend += (series[i + seasonLength] - series[i]) / seasonLength;
   }
   trend /= seasonLength;
 
+  // 3. Inisialisasi Musiman
   const seasonals = new Array(seasonLength).fill(0);
   for (let i = 0; i < seasonLength; i++) {
     seasonals[i] = series[i] - level;
@@ -133,9 +164,9 @@ export function holtWintersForecast(
 
   let L = level;
   let T = trend;
-
   const currentSeasonals = [...seasonals];
 
+  // 4. Update Equations (Filtering loop)
   for (let i = seasonLength; i < n; i++) {
     const y = series[i];
     const sIdx = i % seasonLength;
@@ -150,16 +181,20 @@ export function holtWintersForecast(
     currentSeasonals[sIdx] = params.gamma * (y - L) + (1 - params.gamma) * currentSeasonals[sIdx];
   }
 
+  // 5. Forecast Equation (h steps ahead)
   const predictions: number[] = [];
   for (let h = 1; h <= horizon; h++) {
     const sIdx = (n - 1 + h) % seasonLength;
-    let pred = L + h * T + currentSeasonals[sIdx];
+    const pred = L + h * T + currentSeasonals[sIdx];
     predictions.push(Math.max(0, pred));
   }
 
   return { predictions, fittedValues };
 }
 
+/**
+ * Fallback Cold-Start: Moving Average Sederhana
+ */
 export function simpleMovingAverageForecast(series: number[], horizon: number): { predictions: number[]; fittedValues: number[] } {
   if (series.length === 0) {
     return { predictions: new Array(horizon).fill(0), fittedValues: [] };
@@ -174,6 +209,9 @@ export function simpleMovingAverageForecast(series: number[], horizon: number): 
   return { predictions, fittedValues };
 }
 
+/**
+ * Menerapkan dampak event wisata lokal DIY-Jateng
+ */
 export function applyEventOverlay(forecastPoints: ForecastPoint[], localEvents: LocalEventInput[]): ForecastPoint[] {
   const result: ForecastPoint[] = forecastPoints.map(p => ({ ...p, associated_event: undefined }));
 
@@ -193,9 +231,13 @@ export function applyEventOverlay(forecastPoints: ForecastPoint[], localEvents: 
           case 'massive': multiplier = 1.75; break;
         }
 
-        point.predicted_sales *= multiplier;
-        point.confidence_lower *= multiplier;
-        point.confidence_upper *= multiplier;
+        point.predicted_sales = Math.round(point.predicted_sales * multiplier);
+        point.confidence_lower = Math.round(point.confidence_lower * multiplier);
+        point.confidence_upper = Math.round(point.confidence_upper * multiplier);
+        
+        point.predicted_orders = Math.round(point.predicted_orders * multiplier);
+        point.orders_confidence_lower = Math.round(point.orders_confidence_lower * multiplier);
+        point.orders_confidence_upper = Math.round(point.orders_confidence_upper * multiplier);
 
         point.associated_event = {
           id: event.id,
@@ -212,6 +254,136 @@ export function applyEventOverlay(forecastPoints: ForecastPoint[], localEvents: 
   return result;
 }
 
+const INDO_DAYS_SHORT = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+const INDO_DAYS_FULL = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+const INDO_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+
+/**
+ * Mengelompokkan hari ramai dan hari sepi
+ */
+export function calculateBusyAndQuietDays(
+  forecastPoints: ForecastPoint[],
+  historicalData: DailySalesPoint[]
+): {
+  busySummary: DaysClassificationSummary;
+  quietSummary: DaysClassificationSummary;
+} {
+  if (forecastPoints.length === 0) {
+    return {
+      busySummary: { count: 0, days_label: '—', days_list: [] },
+      quietSummary: { count: 0, days_label: '—', days_list: [] },
+    };
+  }
+
+  // Hitung baseline rata-rata dari histori 14 hari terakhir atau forecast
+  const recentHist = historicalData.slice(-14);
+  const histAvg = recentHist.length > 0 
+    ? recentHist.reduce((s, p) => s + p.sales_amount, 0) / recentHist.length 
+    : 0;
+  
+  const forecastAvg = forecastPoints.reduce((s, p) => s + p.predicted_sales, 0) / forecastPoints.length;
+  const baseline = histAvg > 0 ? (histAvg * 0.4 + forecastAvg * 0.6) : forecastAvg;
+
+  const busyList: string[] = [];
+  const quietList: string[] = [];
+
+  for (const p of forecastPoints) {
+    const d = new Date(p.date);
+    const dayName = INDO_DAYS_SHORT[d.getDay()];
+    const dayDate = d.getDate();
+    const formatted = `${dayName} ${dayDate}`;
+
+    const diff = baseline > 0 ? (p.predicted_sales - baseline) / baseline : 0;
+
+    if (diff >= 0.10 || (p.associated_event && p.associated_event.impact !== 'low')) {
+      busyList.push(formatted);
+    } else if (diff <= -0.10) {
+      quietList.push(formatted);
+    }
+  }
+
+  const formatPills = (list: string[]) => {
+    if (list.length === 0) return 'Tidak ada';
+    if (list.length <= 3) return list.join(', ');
+    return `${list.slice(0, 3).join(', ')}, +${list.length - 3} lainnya`;
+  };
+
+  return {
+    busySummary: {
+      count: busyList.length,
+      days_label: formatPills(busyList),
+      days_list: busyList,
+    },
+    quietSummary: {
+      count: quietList.length,
+      days_label: formatPills(quietList),
+      days_list: quietList,
+    },
+  };
+}
+
+/**
+ * Menghasilkan kartu rekomendasi stok harian terintegrasi kalender event DIY-Jateng
+ */
+export function generateDailyStockRecommendations(
+  forecastPoints: ForecastPoint[],
+  historicalData: DailySalesPoint[],
+  _localEvents: LocalEventInput[] = []
+): DailyStockRecommendation[] {
+  if (forecastPoints.length === 0) return [];
+
+  const recentHist = historicalData.slice(-14);
+  const histAvg = recentHist.length > 0 
+    ? recentHist.reduce((s, p) => s + p.sales_amount, 0) / recentHist.length 
+    : 0;
+  const forecastAvg = forecastPoints.reduce((s, p) => s + p.predicted_sales, 0) / forecastPoints.length;
+  const baseline = histAvg > 0 ? (histAvg * 0.4 + forecastAvg * 0.6) : forecastAvg;
+
+  return forecastPoints.map((p) => {
+    const d = new Date(p.date);
+    const dayFullName = INDO_DAYS_FULL[d.getDay()];
+    const dayDate = d.getDate();
+    const monthName = INDO_MONTHS[d.getMonth()];
+    const dayLabel = `${dayFullName}, ${dayDate} ${monthName}`;
+
+    const diff = baseline > 0 ? ((p.predicted_sales - baseline) / baseline) * 100 : 0;
+    const roundedDiff = Math.round(diff);
+
+    let status: 'busy' | 'quiet' | 'normal' = 'normal';
+    if (roundedDiff >= 10 || (p.associated_event && p.associated_event.impact !== 'low')) {
+      status = 'busy';
+    } else if (roundedDiff <= -10) {
+      status = 'quiet';
+    }
+
+    // Buat saran stok yang actionable
+    let actionText = '';
+    if (p.associated_event) {
+      const event = p.associated_event;
+      const impactText = event.impact === 'massive' ? '+75%' : event.impact === 'high' ? '+45%' : '+25%';
+      actionText = `🎪 Ada event "${event.title}" di ${event.city_name || event.province_name} (potensi lonjakan ${impactText}). Siapkan stok ekstra untuk produk unggulan & oleh-oleh siap bawa agar tidak kehabisan.`;
+    } else if (status === 'busy') {
+      actionText = `Siapkan stok bahan baku ekstra & produk siap kirim lebih awal supaya tidak kehabisan saat lonjakan pesanan.`;
+    } else if (status === 'quiet') {
+      actionText = `Kurangi belanja bahan baku segar/perishable dari biasanya agar tidak ada sisa terbuang dan menghemat modal kas.`;
+    } else {
+      actionText = `Pertahankan jumlah stok dan pasokan bahan baku sesuai operasional standar harian toko.`;
+    }
+
+    return {
+      date: p.date,
+      day_label: dayLabel,
+      status,
+      percentage_diff: roundedDiff,
+      action_text: actionText,
+      associated_event: p.associated_event,
+    };
+  });
+}
+
+/**
+ * Auto-insight teks singkat kuantitatif
+ */
 export function generateAutoInsight(
   historicalData: DailySalesPoint[], 
   forecastData: ForecastPoint[], 
@@ -226,15 +398,18 @@ export function generateAutoInsight(
   const forecastAvg = forecastData.reduce((sum, p) => sum + p.predicted_sales, 0) / forecastData.length;
 
   let peakDay = forecastData[0];
+  let lowestDay = forecastData[0];
+
   for (const p of forecastData) {
-    if (p.predicted_sales > peakDay.predicted_sales) {
-      peakDay = p;
-    }
+    if (p.predicted_sales > peakDay.predicted_sales) peakDay = p;
+    if (p.predicted_sales < lowestDay.predicted_sales) lowestDay = p;
   }
 
-  const dateObj = new Date(peakDay.date);
-  const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-  const peakDayName = days[dateObj.getDay()];
+  const peakDateObj = new Date(peakDay.date);
+  const lowestDateObj = new Date(lowestDay.date);
+
+  const peakDayName = `${INDO_DAYS_FULL[peakDateObj.getDay()]} (${peakDateObj.getDate()} ${INDO_MONTHS[peakDateObj.getMonth()]})`;
+  const lowestDayName = `${INDO_DAYS_FULL[lowestDateObj.getDay()]} (${lowestDateObj.getDate()} ${INDO_MONTHS[lowestDateObj.getMonth()]})`;
 
   let trendText = "stabil";
   let diffPercent = 0;
@@ -247,10 +422,10 @@ export function generateAutoInsight(
       trendText = `turun ${diffPercent}%`;
     }
   } else {
-    trendText = "naik signifikan (data historis nol)";
+    trendText = "naik signifikan (data historis baru)";
   }
 
   const horizonDays = horizon === '7_days' ? '7' : '15';
 
-  return `Prediksi ${horizonDays} hari ke depan diperkirakan ${trendText} dari rata-rata ${last14Days.length} hari terakhir. Puncak penjualan diperkirakan pada hari ${peakDayName}.`;
+  return `Prediksi ${horizonDays} hari ke depan diperkirakan ${trendText} dari rata-rata historis. Puncak omzet diprediksi pada hari ${peakDayName}, sementara titik terendah pada ${lowestDayName}. Sesuaikan kuota stok harian untuk efisiensi modal kas.`;
 }

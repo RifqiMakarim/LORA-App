@@ -8,6 +8,8 @@ import {
   simpleMovingAverageForecast,
   applyEventOverlay,
   generateAutoInsight,
+  calculateBusyAndQuietDays,
+  generateDailyStockRecommendations,
   DailySalesPoint,
   ForecastPoint,
   ForecastHorizon,
@@ -33,15 +35,28 @@ export async function GET(request: Request) {
     let businessId: string | null = businessIdParam || null;
 
     // Cari business yang dimiliki user jika businessId tidak disertakan
-    if (!businessId && user) {
-      const { data: business } = await supabase
-        .from('businesses')
-        .select('id')
-        .eq('owner_id', user.id)
-        .limit(1)
-        .maybeSingle();
+    if (!businessId) {
+      if (user) {
+        const { data: business } = await supabase
+          .from('businesses')
+          .select('id')
+          .eq('owner_id', user.id)
+          .limit(1)
+          .maybeSingle();
 
-      if (business) businessId = business.id;
+        if (business) businessId = business.id;
+      }
+
+      // Fallback: Jika user belum punya toko / belum login, ambil toko pertama dari database
+      if (!businessId) {
+        const { data: firstBiz } = await supabase
+          .from('businesses')
+          .select('id')
+          .limit(1)
+          .maybeSingle();
+
+        if (firstBiz) businessId = firstBiz.id;
+      }
     }
 
     // =========================================================================
@@ -93,14 +108,15 @@ export async function GET(request: Request) {
       : [];
 
     const salesValues = filledSeries.map(p => p.sales_amount);
+    const orderValues = filledSeries.map(p => p.order_count);
     const confidenceLevel = determineConfidenceLevel(filledSeries.length);
     const isFallbackMode = filledSeries.length < 14;
 
     // =========================================================================
     // 3. Jalankan Model Forecast (Holt-Winters atau MA Fallback)
     // =========================================================================
-    let predictions: number[] = [];
-    let fittedValues: number[] = [];
+    let salesPredictions: number[] = [];
+    let orderPredictions: number[] = [];
     let activeParams = DEFAULT_PARAMS;
 
     // Cek apakah ada tuned params tersimpan (dari kalibrasi manual sebelumnya)
@@ -129,13 +145,17 @@ export async function GET(request: Request) {
     }
 
     if (!isFallbackMode && salesValues.length >= 14) {
-      const result = holtWintersForecast(salesValues, activeParams, horizonDays);
-      predictions = result.predictions;
-      fittedValues = result.fittedValues;
+      const salesResult = holtWintersForecast(salesValues, activeParams, horizonDays);
+      salesPredictions = salesResult.predictions;
+
+      const orderResult = holtWintersForecast(orderValues, activeParams, horizonDays);
+      orderPredictions = orderResult.predictions;
     } else {
-      const result = simpleMovingAverageForecast(salesValues, horizonDays);
-      predictions = result.predictions;
-      fittedValues = result.fittedValues;
+      const salesResult = simpleMovingAverageForecast(salesValues, horizonDays);
+      salesPredictions = salesResult.predictions;
+
+      const orderResult = simpleMovingAverageForecast(orderValues, horizonDays);
+      orderPredictions = orderResult.predictions;
     }
 
     // =========================================================================
@@ -164,22 +184,29 @@ export async function GET(request: Request) {
     // 5. Bangun Forecast Points + Event Overlay
     // =========================================================================
     const today = new Date();
-    let forecastPoints: ForecastPoint[] = predictions.map((val, i) => {
+    let forecastPoints: ForecastPoint[] = salesPredictions.map((val, i) => {
       const targetDate = new Date(today);
       targetDate.setDate(today.getDate() + i + 1);
-      const predicted = Math.round(Math.max(val, 0));
+      const predictedSales = Math.round(Math.max(val, 0));
+      const predictedOrders = Math.max(1, Math.round(orderPredictions[i] || (predictedSales > 0 ? Math.round(predictedSales / 150000) : 0)));
 
       // Confidence band berdasarkan MAPE
-      const errorMargin = Math.max(mapeValidated / 100, 0.10);
-      const lower = Math.round(predicted * (1 - errorMargin));
-      const upper = Math.round(predicted * (1 + errorMargin));
+      const errorMargin = Math.max(mapeValidated / 100, 0.12);
+      const lower = Math.round(predictedSales * (1 - errorMargin));
+      const upper = Math.round(predictedSales * (1 + errorMargin));
+
+      const ordersLower = Math.max(0, Math.round(predictedOrders * (1 - errorMargin)));
+      const ordersUpper = Math.round(predictedOrders * (1 + errorMargin));
 
       return {
         date: targetDate.toISOString().split('T')[0],
         is_projected: true,
-        predicted_sales: predicted,
+        predicted_sales: predictedSales,
         confidence_lower: Math.max(lower, 0),
         confidence_upper: upper,
+        predicted_orders: predictedOrders,
+        orders_confidence_lower: ordersLower,
+        orders_confidence_upper: ordersUpper,
       };
     });
 
@@ -187,7 +214,7 @@ export async function GET(request: Request) {
     let localEvents: LocalEventInput[] = [];
     const { data: eventsData } = await supabase
       .from('local_events')
-      .select('id, title, province_name, city_name, start_date, end_date, expected_tourist_impact')
+      .select('id, title, province_name, city_name, start_date, end_date, expected_tourist_impact, description')
       .order('start_date', { ascending: true });
 
     if (eventsData && eventsData.length > 0) {
@@ -199,26 +226,39 @@ export async function GET(request: Request) {
         start_date: e.start_date as string,
         end_date: e.end_date as string,
         expected_tourist_impact: (e.expected_tourist_impact as 'low' | 'medium' | 'high' | 'massive') || 'medium',
+        description: (e.description as string | null) || null,
       }));
     }
 
     forecastPoints = applyEventOverlay(forecastPoints, localEvents);
 
     // =========================================================================
-    // 6. Hitung Ringkasan
+    // 6. Hitung Ringkasan (Omzet, Orders, Hari Ramai/Sepi, Rekomendasi Stok)
     // =========================================================================
-    const totalProjected = forecastPoints.reduce((sum, p) => sum + p.predicted_sales, 0);
+    const totalProjectedRevenue = forecastPoints.reduce((sum, p) => sum + p.predicted_sales, 0);
+    const totalProjectedOrders = forecastPoints.reduce((sum, p) => sum + p.predicted_orders, 0);
+    
     const historicalRecent = filledSeries.slice(-horizonDays);
     const recentTotal = historicalRecent.reduce((sum, p) => sum + p.sales_amount, 0);
     const growth = recentTotal > 0
-      ? Number((((totalProjected - recentTotal) / recentTotal) * 100).toFixed(1))
+      ? Number((((totalProjectedRevenue - recentTotal) / recentTotal) * 100).toFixed(1))
       : 0;
+
+    const { busySummary, quietSummary } = calculateBusyAndQuietDays(forecastPoints, filledSeries);
+    const dailyStockRecommendations = generateDailyStockRecommendations(forecastPoints, filledSeries, localEvents);
 
     // =========================================================================
     // 7. Auto Insight + Gemini AI Narrative
     // =========================================================================
     const autoInsight = generateAutoInsight(filledSeries, forecastPoints, horizonParam);
-    const aiNarrative = await generateAiStrategicNarrative(totalProjected, growth, localEvents, isFallbackMode);
+    const aiNarrative = await generateAiStrategicNarrative(
+      totalProjectedRevenue,
+      growth,
+      busySummary,
+      quietSummary,
+      localEvents,
+      isFallbackMode
+    );
 
     // =========================================================================
     // 8. Response Final
@@ -234,8 +274,12 @@ export async function GET(request: Request) {
       },
       historical_data: filledSeries,
       forecast_data: forecastPoints,
-      total_projected_revenue: totalProjected,
+      total_projected_revenue: totalProjectedRevenue,
+      total_projected_orders: totalProjectedOrders,
       growth_percentage: growth,
+      busy_summary: busySummary,
+      quiet_summary: quietSummary,
+      daily_stock_recommendations: dailyStockRecommendations,
       auto_insight: autoInsight,
       ai_qualitative_note: aiNarrative,
     };
@@ -254,39 +298,57 @@ export async function GET(request: Request) {
 async function generateAiStrategicNarrative(
   totalProjected: number,
   growth: number,
+  busySummary: { count: number; days_label: string },
+  quietSummary: { count: number; days_label: string },
   events: LocalEventInput[],
   isFallback: boolean
 ): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
-  const formattedRevenue = new Intl.NumberFormat('id-ID').format(totalProjected);
+  const formattedRevenue = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalProjected);
 
   if (!apiKey) {
-    return `Berdasarkan proyeksi matematik, omzet Anda diprediksi mencapai Rp ${formattedRevenue} dengan pertumbuhan ${growth}%. Disarankan menambah stok 20% menjelang event kebudayaan daerah terdekat.`;
+    const eventNote = events.length > 0 ? `Siapkan stok tambahan menjelang ${events[0].title}.` : '';
+    return `Omzet diprediksi mencapai ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}% vs periode lalu). Hari ramai diperkirakan pada (${busySummary.days_label}), sementara hari sepi pada (${quietSummary.days_label}). Kurangi belanja stok bahan segar pada hari sepi untuk efisiensi modal, dan perbanyak stok siap jual saat hari ramai. ${eventNote}`;
   }
 
   try {
     const ai = new GoogleGenAI({ apiKey });
+    const candidateModels = ['gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-flash-latest'];
 
     const promptText = `
-Anda adalah Konsultan Bisnis AI Senior khusus UMKM sektor Batik, Kuliner, dan Kerajinan di Daerah Istimewa Yogyakarta & Jawa Tengah.
+Anda adalah Asisten Bisnis AI Khusus UMKM (Batik, Kuliner, Oleh-oleh, Kerajinan) di Daerah Istimewa Yogyakarta & Jawa Tengah.
 
-Berikut data proyeksi penjualan toko UMKM:
-- Mode Prediksi: ${isFallback ? 'Fallback Moving Average (data masih sedikit)' : 'Holt-Winters Triple Exponential Smoothing'}
-- Estimasi Total Proyeksi Omzet: Rp ${formattedRevenue}
-- Est. Pertumbuhan: ${growth}%
-- Event Kebudayaan/Pariwisata Terdekat: ${events.map(e => `${e.title} (${e.province_name}, ${e.start_date})`).join(', ') || 'Tidak ada event terdeteksi'}
+Berikut data ringkasan proyeksi toko:
+- Total Proyeksi Omzet: ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}% vs periode lalu)
+- Hari Diprediksi Ramai (${busySummary.count} hari): ${busySummary.days_label}
+- Hari Diprediksi Sepi (${quietSummary.count} hari): ${quietSummary.days_label}
+- Event Budaya/Wisata Daerah DIY-Jateng: ${events.map(e => `${e.title} (${e.province_name} - dampak: ${e.expected_tourist_impact})`).join(', ') || 'Tidak ada event khusus'}
+- Status Data: ${isFallback ? 'Histori awal (Cold Start)' : 'Histori matang (Holt-Winters)'}
 
-Berikan 3 poin rekomendasi strategis konkret (persiapan stok, strategi harga/paket promosi, dan momentum event) yang singkat, padat, ramah, dan bernuansa lokal (max 3-4 kalimat).
+Tugas:
+Buat 1 paragraf ringkas (3-4 kalimat) bergaya lugas & solutif seperti asisten bisnis profesional:
+1. Sebutkan perkiraan tren omzet dan hari puncak vs hari sepi.
+2. Berikan instruksi konkret terkait persiapan stok produk unggulan & belanja bahan baku (kapan harus tambah stok, kapan harus menekan belanja bahan segar agar tidak mubazir).
+3. Jika ada event kebudayaan daerah terdekat, ingatkan untuk memanfaatkan momentum lonjakan wisatawan.
+Hindari jargon teknis seperti 'Holt-Winters' atau 'MAPE'. Gunakan bahasa Indonesia yang ramah, praktis, dan langsung dapat dieksekusi oleh pedagang.
 `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.0-flash',
-      contents: promptText,
-    });
+    for (const model of candidateModels) {
+      try {
+        const response = await ai.models.generateContent({
+          model,
+          contents: promptText,
+        });
+        if (response.text) return response.text;
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn(`Forecast AI: Model ${model} failed, trying next candidate...`, errMsg);
+      }
+    }
 
-    return response.text || `Proyeksi omzet periode ini mencapai Rp ${formattedRevenue}. Manfaatkan lonjakan wisatawan pada event daerah terdekat!`;
+    return `Omzet diprediksi mencapai ${formattedRevenue} dengan pertumbuhan ${growth}%. Tambah stok produk unggulan saat hari ramai (${busySummary.days_label}) dan tekan belanja bahan segar pada hari sepi (${quietSummary.days_label}).`;
   } catch (err) {
     console.warn('Gemini API call fallback:', err);
-    return `Proyeksi omzet periode ini mencapai Rp ${formattedRevenue} (pertumbuhan ${growth}%). Manfaatkan lonjakan wisatawan pada event daerah terdekat dengan menyiapkan produk terlaris!`;
+    return `Omzet diprediksi mencapai ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}%). Tambah stok produk unggulan saat hari ramai (${busySummary.days_label}) dan tekan belanja bahan baku segar pada hari sepi (${quietSummary.days_label}) untuk efisiensi modal kas.`;
   }
 }

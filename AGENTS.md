@@ -19,4 +19,5 @@ All AI Coding Agents (Antigravity, Claude, Cursor, Copilot) MUST read and adhere
 - [Design.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Design.md) - UI/UX Design System (Deep Indigo & Terracotta Warm Tokens, Components & Breakpoints).
 - [Rules.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Rules.md) - Mandatory Engineering Rules & Best Practices for AI Agents.
 - [Schema.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Schema.md) - Database Schema DDL, ERD Diagram, Row Level Security (RLS), & DIY-Jateng Seed Data.
+- [Forecasting.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Forecasting.md) - Technical Mathematics, Parameters, Event Overlays, & Specifications for Predictive AI.
 
