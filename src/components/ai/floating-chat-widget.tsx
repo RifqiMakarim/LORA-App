@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Sparkles, X, Send, Bot, User, Maximize2 } from 'lucide-react';
 import Link from 'next/link';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface Message {
   id: string;
@@ -80,23 +81,23 @@ export default function FloatingChatWidget() {
       {/* Floating Action Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 z-40 p-4 rounded-full bg-indigo-900 hover:bg-indigo-950 text-amber-400 shadow-2xl border border-indigo-700 hover:scale-105 transition-all flex items-center gap-2 group"
+        className="fixed bottom-6 right-6 z-40 p-4 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-400 text-slate-950 shadow-2xl shadow-amber-400/30 border border-amber-300 hover:scale-105 transition-all flex items-center gap-2 group cursor-pointer"
         title="Buka AI Business Consultant"
       >
         <Sparkles className="w-6 h-6 animate-pulse group-hover:rotate-12 transition-transform" />
-        <span className="text-xs font-bold text-white pr-1 hidden sm:inline">AI Consultant</span>
+        <span className="text-xs font-bold text-slate-950 pr-1 hidden sm:inline">AI Consultant</span>
       </button>
 
       {/* Slide-over Drawer Window */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 z-50 w-96 max-w-[90vw] h-[520px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Header */}
-          <div className="p-4 bg-indigo-950 text-white flex items-center justify-between border-b border-indigo-800">
+          <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-amber-400" />
               <div>
                 <h4 className="font-bold text-sm">LORA AI Consultant</h4>
-                <p className="text-[10px] text-indigo-300">Fast BI Advice</p>
+                <p className="text-[10px] text-amber-300">Fast BI Advice</p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -123,16 +124,18 @@ export default function FloatingChatWidget() {
               return (
                 <div key={m.id} className={`flex items-start gap-2 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}>
                   <div className={`w-7 h-7 rounded-xl flex items-center justify-center shrink-0 text-xs font-bold ${
-                    isUser ? 'bg-amber-600 text-white' : 'bg-indigo-900 text-amber-400'
+                    isUser 
+                      ? 'bg-amber-500 text-slate-950 shadow-xs shadow-amber-500/20' 
+                      : 'bg-amber-500/15 text-amber-500 border border-amber-500/30'
                   }`}>
                     {isUser ? <User className="w-3.5 h-3.5" /> : <Bot className="w-3.5 h-3.5" />}
                   </div>
                   <div className={`p-3 rounded-2xl max-w-[80%] leading-relaxed ${
                     isUser 
-                      ? 'bg-amber-600 text-white rounded-tr-xs' 
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-xs'
+                      ? 'bg-amber-500 text-slate-950 font-medium rounded-tr-xs' 
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-xs border border-slate-200 dark:border-slate-700'
                   }`}>
-                    {m.content}
+                    {isUser ? m.content : <MarkdownRenderer content={m.content} className="text-xs" />}
                   </div>
                 </div>
               );
@@ -151,12 +154,12 @@ export default function FloatingChatWidget() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               disabled={isStreaming}
-              className="flex-1 bg-white dark:bg-slate-800 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-500"
+              className="flex-1 bg-white dark:bg-slate-800 px-3 py-2 text-xs rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-amber-400"
             />
             <button
               type="submit"
               disabled={!input.trim() || isStreaming}
-              className="p-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl disabled:opacity-50"
+              className="p-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl disabled:opacity-50 transition-colors shadow-xs shadow-amber-500/20"
             >
               <Send className="w-3.5 h-3.5" />
             </button>

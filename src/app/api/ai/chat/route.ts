@@ -5,7 +5,7 @@ import { buildSystemPrompt, BusinessContextInput } from '@/lib/ai/prompts';
 
 export async function POST(request: Request) {
   try {
-    const { message, conversation_id } = await request.json();
+    const { message } = await request.json();
 
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Pesan tidak boleh kosong' }, { status: 400 });
@@ -15,7 +15,6 @@ export async function POST(request: Request) {
     const { data: { user } } = await supabase.auth.getUser();
 
     let businessName = 'Toko UMKM LORA';
-    let businessId: string | null = null;
     let contextInput: BusinessContextInput = getDemoBusinessContext();
 
     if (user) {
@@ -26,7 +25,6 @@ export async function POST(request: Request) {
         .maybeSingle();
 
       if (business) {
-        businessId = business.id;
         businessName = business.name;
 
         // Fetch low stock products
@@ -43,7 +41,7 @@ export async function POST(request: Request) {
           revenue_30d: 14500000,
           order_count_30d: 32,
           avg_order_value: 453000,
-          low_stock_products: lowStock ? lowStock.map((p: any) => ({ name: p.name, stock: p.stock, min_stock: p.min_stock })) : [],
+          low_stock_products: lowStock ? lowStock.map((p: { name: string; stock: number; min_stock: number }) => ({ name: p.name, stock: p.stock, min_stock: p.min_stock })) : [],
           rfm_segments: { champions: 5, at_risk: 3, potential: 8, total: 20 },
           upcoming_events: [
             { title: 'Dieng Culture Festival 2026', province: 'Jawa Tengah', start_date: '2026-08-20' },
@@ -59,34 +57,60 @@ export async function POST(request: Request) {
 
     if (!apiKey) {
       return new Response(
-        `Sugeng tinemu Kak! Berdasarkan data toko **${businessName}**, omzet 30 hari Anda mencapai Rp ${new Intl.NumberFormat('id-ID').format(contextInput.revenue_30d)} dengan ${contextInput.order_count_30d} transaksi. Persiapkan stok menjelang Dieng Culture Festival!`,
+        `Sugeng tinemu Kak! Berdasarkan data toko **${businessName}**, omzet 30 hari Anda mencapai Rp ${new Intl.NumberFormat('id-ID').format(contextInput.revenue_30d)} dengan ${contextInput.order_count_30d} transaksi. Persiapkan stok menjelang event terdekat!`,
         { headers: { 'Content-Type': 'text/plain; charset=utf-8' } }
       );
     }
 
     const ai = new GoogleGenAI({ apiKey });
-    const model = 'gemini-1.5-flash';
+    const candidateModels = ['gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-flash-latest'];
+    let responseStream: AsyncIterable<{ text?: string }> | null = null;
 
-    // Panggil Gemini Stream
-    const responseStream = await ai.models.generateContentStream({
-      model,
-      contents: [
-        { role: 'user', parts: [{ text: systemPrompt }] },
-        { role: 'user', parts: [{ text: message }] }
-      ]
-    });
+    // Coba model prioritas dengan fallback
+    for (const model of candidateModels) {
+      try {
+        const streamResult = await ai.models.generateContentStream({
+          model,
+          contents: message,
+          config: {
+            systemInstruction: systemPrompt,
+          },
+        });
+        if (streamResult) {
+          responseStream = streamResult;
+          break;
+        }
+      } catch (err: unknown) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        console.warn(`Model ${model} gagal atau sibuk, mencoba model berikutnya...`, errMsg);
+      }
+    }
+
+    // Jika semua model gagal (misal koneksi/quota), berikan fallback stream cerdas
+    if (!responseStream) {
+      const fallbackText = `Sugeng tinemu! Saat ini server AI sedang mengalami beban tinggi. Berdasarkan data terkini toko **${businessName}**:\n\n` +
+        `• **Omzet 30 Hari**: Rp ${new Intl.NumberFormat('id-ID').format(contextInput.revenue_30d)} (${contextInput.order_count_30d} transaksi)\n` +
+        `• **AOV**: Rp ${new Intl.NumberFormat('id-ID').format(contextInput.avg_order_value)}\n` +
+        `• **Status Stok**: ${contextInput.low_stock_products.length > 0 ? contextInput.low_stock_products.map(p => `${p.name} (sisa ${p.stock})`).join(', ') : 'Semua aman'}\n` +
+        `• **Event Terdekat**: ${contextInput.upcoming_events.map(e => e.title).join(', ')}\n\n` +
+        `💡 *Rekomendasi Cepat*: Pastikan stok produk unggulan Anda mencukupi sebelum puncak event pariwisata DIY-Jateng!`;
+
+      return new Response(fallbackText, {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+      });
+    }
 
     // Buat ReadableStream untuk Server-Sent Events / Chunk Streaming
     const encoder = new TextEncoder();
-    let completeAiText = '';
 
     const stream = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of responseStream) {
             const text = chunk.text || '';
-            completeAiText += text;
-            controller.enqueue(encoder.encode(text));
+            if (text) {
+              controller.enqueue(encoder.encode(text));
+            }
           }
           controller.close();
         } catch (err) {
