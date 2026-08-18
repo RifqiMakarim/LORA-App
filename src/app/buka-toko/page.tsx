@@ -280,13 +280,13 @@ export default function BukaTokoPage() {
                                                     </p>
                                                     <CldUploadWidget
                                                         uploadPreset="lora_toko"
-                                                        onSuccess={(result) => {
+                                                        onSuccess={(result: any) => {
                                                             if (typeof result.info !== 'string' && result.info?.secure_url) {
                                                                 setLogoUrl(result.info.secure_url);
                                                             }
                                                         }}
                                                     >
-                                                        {({ open }) => (
+                                                        {({ open }: { open: any }) => (
                                                             <button
                                                                 type="button"
                                                                 onClick={() => open()}
@@ -301,13 +301,13 @@ export default function BukaTokoPage() {
                                         ) : (
                                             <CldUploadWidget
                                                 uploadPreset="lora_toko"
-                                                onSuccess={(result) => {
+                                                onSuccess={(result: any) => {
                                                     if (typeof result.info !== 'string' && result.info?.secure_url) {
                                                         setLogoUrl(result.info.secure_url);
                                                     }
                                                 }}
                                             >
-                                                {({ open }) => (
+                                                {({ open }: { open: any }) => (
                                                     <button
                                                         type="button"
                                                         onClick={() => open()}
@@ -341,13 +341,13 @@ export default function BukaTokoPage() {
                                                 <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                     <CldUploadWidget
                                                         uploadPreset="lora_toko"
-                                                        onSuccess={(result) => {
+                                                        onSuccess={(result: any) => {
                                                             if (typeof result.info !== 'string' && result.info?.secure_url) {
                                                                 setBannerUrl(result.info.secure_url);
                                                             }
                                                         }}
                                                     >
-                                                        {({ open }) => (
+                                                        {({ open }: { open: any }) => (
                                                             <button
                                                                 type="button"
                                                                 onClick={() => open()}
@@ -362,13 +362,13 @@ export default function BukaTokoPage() {
                                         ) : (
                                             <CldUploadWidget
                                                 uploadPreset="lora_toko"
-                                                onSuccess={(result) => {
+                                                onSuccess={(result: any) => {
                                                     if (typeof result.info !== 'string' && result.info?.secure_url) {
                                                         setBannerUrl(result.info.secure_url);
                                                     }
                                                 }}
                                             >
-                                                {({ open }) => (
+                                                {({ open }: { open: any }) => (
                                                     <button
                                                         type="button"
                                                         onClick={() => open()}

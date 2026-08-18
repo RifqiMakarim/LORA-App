@@ -15,15 +15,16 @@ export async function createClient() {
                 set(name: string, value: string, options: CookieOptions) {
                     try {
                         cookieStore.set({ name, value, ...options })
-                    } catch (error) {
-                        console.warn('Gagal set cookie Supabase di Server Component:', error)
+                    } catch {
+                        // Supabase SSR attempting to set cookies in read-only Server Component context.
+                        // Safe to ignore as cookies are managed in middleware and route handlers.
                     }
                 },
                 remove(name: string, options: CookieOptions) {
                     try {
                         cookieStore.set({ name, value: '', ...options })
-                    } catch (error) {
-                        console.warn('Gagal remove cookie Supabase di Server Component:', error)
+                    } catch {
+                        // Safe to ignore in Server Component context.
                     }
                 },
             },

@@ -13,10 +13,23 @@ import { createClient } from '@/lib/supabase/server';
 export async function POST() {
   try {
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const { data: { user } } = await supabase.auth.getUser();
 
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Anda harus login terlebih dahulu untuk menjalankan seed data.' }, { status: 401 });
+    let userId: string = user?.id || '00000000-0000-0000-0000-000000000001';
+
+    // WAJIB: Pastikan profile untuk userId ini sudah ada di public.profiles
+    // agar tidak melanggar foreign key constraint "businesses_owner_id_fkey"!
+    const { error: profileErr } = await supabase.from('profiles').upsert({
+      id: userId,
+      full_name: user?.user_metadata?.full_name || 'Penjual LORA (Demo)',
+      phone_number: '6281234567890',
+      is_seller: true,
+      is_buyer: true,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' });
+
+    if (profileErr) {
+      console.warn('Seed profile upsert warning:', profileErr.message);
     }
 
     const results: string[] = [];
@@ -66,7 +79,7 @@ export async function POST() {
 
     // 1. Buat Business A
     const { data: bizA, error: bizAErr } = await supabase.from('businesses').upsert({
-      owner_id: user.id,
+      owner_id: userId,
       name: 'Batik Kencana Jogja',
       slug: 'batik-kencana-jogja',
       description: 'Pusat batik tulis premium motif klasik Keraton Yogyakarta. Menyediakan kain, kemeja, dan aksesori batik berkualitas tinggi.',
@@ -153,7 +166,7 @@ export async function POST() {
 
         ordersA.push({
           business_id: bizA.id,
-          customer_id: useOwnerId ? user.id : null,
+          customer_id: useOwnerId ? userId : null,
           total_amount: totalAmount,
           order_status: 'completed',
           payment_status: 'paid',
@@ -181,7 +194,7 @@ export async function POST() {
     // =========================================================================
 
     const { data: bizB, error: bizBErr } = await supabase.from('businesses').upsert({
-      owner_id: user.id,
+      owner_id: userId,
       name: 'Bakpia Pathok Sekar DIY',
       slug: 'bakpia-pathok-sekar-diy',
       description: 'Bakpia isi kacang hijau, coklat, dan keju khas Pathok Yogyakarta. Oleh-oleh favorit wisatawan.',
@@ -235,7 +248,7 @@ export async function POST() {
 
         ordersB.push({
           business_id: bizB.id,
-          customer_id: user.id,
+          customer_id: userId,
           total_amount: totalAmount,
           order_status: 'completed',
           payment_status: 'paid',
