@@ -212,7 +212,7 @@ export default function SellerOrdersClientView({
                                     filterStatus === tab.key
                                         ? 'bg-terracotta text-white shadow-md shadow-terracotta/20'
                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
-                                }`}
+                                }}`}
                             >
                                 {tab.label}
                             </button>
@@ -289,7 +289,7 @@ export default function SellerOrdersClientView({
                                                 Pesanan: <span className="text-terracotta">{order.short_id || order.id.split('-')[0]}</span>
                                             </h2>
                                             {isHighlighted && (
-                                                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-500 text-white font-extrabold rounded-full text-[10px] uppercase tracking-wider animate-bounce shadow-sm">
+                                                 <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-500 text-white font-extrabold rounded-full text-[10px] uppercase tracking-wider animate-bounce shadow-sm">
                                                     <Sparkles className="w-3 h-3" /> Dipilih Dari WA
                                                 </span>
                                             )}

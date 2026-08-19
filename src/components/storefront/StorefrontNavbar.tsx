@@ -190,7 +190,7 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
                     {/* Desktop Menu: Logika Tombol Toko (SELALU Mengarah ke /toko/dashboard) */}
                     {profile?.is_seller ? (
                         <Link
-                            href="/toko/dashboard"
+                            href="/dashboard"
                             className="hidden md:inline-flex items-center gap-1.5 px-3.5 py-2 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300/80 rounded-2xl text-xs font-bold transition-all shadow-sm group cursor-pointer"
                         >
                             <Store className="w-4 h-4 text-amber-700 group-hover:scale-105 transition-transform" />
@@ -364,7 +364,7 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
 
                         {profile?.is_seller ? (
                             <Link
-                                href="/toko/dashboard"
+                                href="/dashboard"
                                 onClick={() => setIsMobileMenuOpen(false)}
                                 className="flex items-center gap-2.5 px-3 py-2.5 text-xs font-bold text-amber-900 bg-amber-50 rounded-xl border border-amber-200"
                             >

@@ -5,6 +5,11 @@ import InventoryClient from '@/components/dashboard/InventoryClient';
 
 export const revalidate = 0; // Disable cache to fetch fresh product list
 
+export const metadata = {
+  title: 'Inventaris & Stok ROP | LORA Seller Centre',
+  description: 'Kelola stok produk, variasi harga, dan batas Reorder Point (ROP) toko UMKM Anda.',
+};
+
 export default async function InventoryOverviewPage() {
   const supabase = await createClient();
 

@@ -48,6 +48,31 @@ export async function registerBusiness(
         return { error: 'Anda harus masuk (login) terlebih dahulu untuk mendaftarkan toko.' };
     }
 
+    // 1b. Cek apakah pengguna sudah memiliki toko di tabel businesses (mencegah registrasi ulang / error saat retry)
+    const { data: existingBusiness } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+    if (existingBusiness) {
+        // Toko sudah terdaftar, pastikan is_seller = true pada profiles dan langsung redirect ke dashboard
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                const { error: syncError } = await supabase
+                    .from('profiles')
+                    .update({ is_seller: true, updated_at: new Date().toISOString() })
+                    .eq('id', user.id);
+                if (!syncError) break;
+            } catch (e) {
+                console.warn(`[registerBusiness] Existing business sync attempt ${attempt + 1} error:`, e);
+            }
+            await new Promise((res) => setTimeout(res, 200));
+        }
+        revalidatePath('/', 'layout');
+        redirect('/dashboard');
+    }
+
     // 2. Ambil contact_number langsung dari tabel profiles berdasarkan user.id
     const { data: profileData } = await supabase
         .from('profiles')
@@ -139,17 +164,26 @@ export async function registerBusiness(
         }
     }
 
-    // 6. Update tabel profiles (set is_seller = true)
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-            is_seller: true,
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+    // 6. Update tabel profiles (set is_seller = true) dengan mekanisme retry & resilience terhadap transient fetch error
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({
+                    is_seller: true,
+                    updated_at: new Date().toISOString(),
+                })
+                .eq('id', user.id);
 
-    if (profileError) {
-        return { error: `Toko berhasil dibuat, namun gagal memperbarui status penjual: ${profileError.message}` };
+            if (!profileError) {
+                break;
+            } else {
+                console.warn(`[registerBusiness] Profile update attempt ${attempt + 1} error:`, profileError.message);
+            }
+        } catch (err: any) {
+            console.warn(`[registerBusiness] Profile update attempt ${attempt + 1} exception:`, err?.message || err);
+        }
+        await new Promise((res) => setTimeout(res, 300));
     }
 
     // 7. Revalidate cache dan redirect ke /dashboard

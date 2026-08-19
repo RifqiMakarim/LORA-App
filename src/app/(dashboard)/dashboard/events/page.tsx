@@ -3,6 +3,11 @@ import EventsClient from '@/components/dashboard/EventsClient';
 
 export const revalidate = 0; // Disable cache to fetch fresh events data
 
+export const metadata = {
+  title: 'Event & Tren Daerah | LORA Seller Centre',
+  description: 'Kalender event kebudayaan & pariwisata daerah DIY dan Jawa Tengah untuk antisipasi lonjakan permintaan toko.',
+};
+
 export default async function EventsOverviewPage() {
   const supabase = await createClient();
 
@@ -30,11 +35,11 @@ export default async function EventsOverviewPage() {
       .eq('owner_id', user.id)
       .maybeSingle();
 
-    if (business) {
-      businessProvince = business.province_name;
-      businessName = business.name;
-    }
+  if (business) {
+    businessProvince = business.province_name;
+    businessName = business.name;
   }
+}
 
   // 2. Fetch Master Event
   const { data: rawEvents } = await supabase

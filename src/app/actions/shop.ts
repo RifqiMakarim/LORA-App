@@ -25,6 +25,30 @@ export async function registerShop(prevState: RegisterShopState, formData: FormD
         return { error: 'Anda harus masuk (login) terlebih dahulu untuk mendaftarkan toko UMKM.' };
     }
 
+    // 1b. Cek jika pengguna sudah memiliki toko (mencegah duplicate insert error)
+    const { data: existingBusiness } = await supabase
+        .from('businesses')
+        .select('id')
+        .eq('owner_id', user.id)
+        .maybeSingle();
+
+    if (existingBusiness) {
+        for (let attempt = 0; attempt < 3; attempt++) {
+            try {
+                const { error: syncError } = await supabase
+                    .from('profiles')
+                    .update({ is_seller: true, updated_at: new Date().toISOString() })
+                    .eq('id', user.id);
+                if (!syncError) break;
+            } catch (e) {
+                console.warn(`[registerShop] Existing sync attempt ${attempt + 1} error:`, e);
+            }
+            await new Promise((res) => setTimeout(res, 200));
+        }
+        revalidatePath('/', 'layout');
+        redirect('/dashboard');
+    }
+
     // 2. Ekstrak & Validasi Input Form
     const shopName = (formData.get('shopName') as string || formData.get('name') as string || '').trim();
     const description = (formData.get('description') as string || '').trim();
@@ -71,14 +95,23 @@ export async function registerShop(prevState: RegisterShopState, formData: FormD
         return { error: `Gagal menyimpan data toko: ${shopInsertError}` };
     }
 
-    // 4. Perbarui Status Profile is_seller menjadi true
-    const { error: profileError } = await supabase
-        .from('profiles')
-        .update({ is_seller: true, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
+    // 4. Perbarui Status Profile is_seller menjadi true dengan retry & resilience
+    for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({ is_seller: true, updated_at: new Date().toISOString() })
+                .eq('id', user.id);
 
-    if (profileError) {
-        return { error: `Toko berhasil dibuat, namun gagal memperbarui status profil: ${profileError.message}` };
+            if (!profileError) {
+                break;
+            } else {
+                console.warn(`[registerShop] Profile update attempt ${attempt + 1} error:`, profileError.message);
+            }
+        } catch (err: any) {
+            console.warn(`[registerShop] Profile update attempt ${attempt + 1} exception:`, err?.message || err);
+        }
+        await new Promise((res) => setTimeout(res, 300));
     }
 
     // 5. Revalidasi & Redirect ke Dashboard Penjual

@@ -9,6 +9,7 @@ import {
     Package,
     TrendingUp,
     Sparkles,
+    Users,
     Calendar,
     Settings,
     ArrowLeft,
@@ -58,7 +59,7 @@ const navItems: NavItem[] = [
     },
     {
         name: 'Pesanan',
-        href: '/toko/dashboard/pesanan',
+        href: '/dashboard/pesanan',
         icon: ShoppingBag,
     },
     {
@@ -78,13 +79,18 @@ const navItems: NavItem[] = [
         badge: 'AI LORA',
     },
     {
+        name: 'Pelanggan',
+        href: '/dashboard/customers',
+        icon: Users,
+    },
+    {
         name: 'Event & Tren',
         href: '/dashboard/events',
         icon: Calendar,
     },
     {
         name: 'Pengaturan Toko',
-        href: '/toko/dashboard/pengaturan',
+        href: '/dashboard/pengaturan',
         icon: Settings,
     },
 ];

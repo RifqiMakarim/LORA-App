@@ -133,21 +133,20 @@ export default function AiConsultantPage() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-5xl mx-auto h-[calc(100vh-5rem)] flex flex-col space-y-4">
-      {/* Page Header */}
-      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-indigo-900 text-amber-400 rounded-2xl shadow-md border border-indigo-700">
-            <Sparkles className="w-6 h-6 animate-pulse" />
+    <div className="space-y-6 pb-6 h-[calc(100vh-6.5rem)] flex flex-col">
+      {/* 1. Header Banner Selaras Dashboard LORA */}
+      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-900 rounded-full text-xs font-bold">
+            <Sparkles className="w-3.5 h-3.5 text-terracotta" />
+            <span>LORA Business Intelligence</span>
           </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold text-indigo-950 dark:text-indigo-950">
-              AI Business Consultant
-            </h1>
-            <p className="text-xs text-slate-500">
-              Conversational BI Real-Time berbasis konteks data 360° toko & event DIY-Jateng.
-            </p>
-          </div>
+          <h1 className="text-xl sm:text-2xl font-outfit font-black text-slate-900 tracking-tight">
+            AI Business Consultant
+          </h1>
+          <p className="text-xs text-slate-500 font-medium">
+            Conversational BI Real-Time berbasis konteks data 360° toko &amp; event DIY-Jateng
+          </p>
         </div>
 
         <button 
@@ -159,16 +158,16 @@ export default function AiConsultantPage() {
               timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
             }]);
           }}
-          className="p-2 rounded-xl text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center gap-1.5 text-xs font-semibold"
+          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
           title="Reset Percakapan"
         >
-          <RefreshCw className="w-4 h-4" />
-          <span className="hidden sm:inline">Reset Chat</span>
+          <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+          <span>Reset Chat</span>
         </button>
       </div>
 
-      {/* Quick Prompt Chips */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      {/* 2. Quick Prompt Chips */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {QUICK_PROMPTS.map((item, idx) => {
           const Icon = item.icon;
           return (
@@ -176,20 +175,22 @@ export default function AiConsultantPage() {
               key={idx}
               disabled={isStreaming}
               onClick={() => handleSendMessage(item.prompt)}
-              className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl text-left hover:border-amber-500 dark:hover:border-amber-500 transition-all text-xs group shadow-sm flex flex-col justify-between gap-1.5"
+              className="p-3.5 bg-white border border-slate-200/90 hover:border-terracotta hover:bg-amber-50/20 rounded-2xl text-left transition-all text-xs group shadow-xs flex flex-col justify-between gap-2 cursor-pointer disabled:opacity-50"
             >
               <div className="flex items-center justify-between">
-                <Icon className="w-4 h-4 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform" />
-                <Sparkles className="w-3 h-3 text-slate-300 dark:text-slate-600 group-hover:text-amber-500" />
+                <div className="p-1.5 bg-amber-50 text-terracotta rounded-xl group-hover:scale-105 transition-transform">
+                  <Icon className="w-4 h-4" />
+                </div>
+                <Sparkles className="w-3.5 h-3.5 text-slate-300 group-hover:text-terracotta transition-colors" />
               </div>
-              <span className="font-semibold text-slate-800 dark:text-slate-200 line-clamp-1">{item.label}</span>
+              <span className="font-bold text-slate-900 line-clamp-1">{item.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* Main Chat Container */}
-      <div className="flex-1 bg-white dark:bg-slate-800 rounded-3xl border border-slate-200 dark:border-slate-700 shadow-sm p-4 md:p-6 overflow-y-auto space-y-4">
+      {/* 3. Main Chat Container */}
+      <div className="flex-1 bg-white rounded-3xl border border-slate-200/90 shadow-xs p-4 sm:p-6 overflow-y-auto space-y-4">
         {messages.map((msg) => {
           const isUser = msg.sender === 'user';
 
@@ -199,26 +200,26 @@ export default function AiConsultantPage() {
               className={`flex items-start gap-3 ${isUser ? 'flex-row-reverse' : 'flex-row'}`}
             >
               {/* Avatar Icon */}
-              <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-sm ${
+              <div className={`w-9 h-9 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
                 isUser 
-                  ? 'bg-amber-600 text-white' 
-                  : 'bg-indigo-900 text-amber-400 border border-indigo-700'
+                  ? 'bg-gradient-to-tr from-terracotta to-amber-500 text-white font-bold text-xs' 
+                  : 'bg-slate-900 text-amber-400 border border-slate-800'
               }`}>
-                {isUser ? <User className="w-5 h-5" /> : <Bot className="w-5 h-5" />}
+                {isUser ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
               </div>
 
               {/* Message Content Bubble */}
-              <div className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 text-sm leading-relaxed ${
+              <div className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 sm:p-5 text-xs sm:text-sm leading-relaxed ${
                 isUser 
-                  ? 'bg-amber-600 text-white rounded-tr-xs shadow-md' 
-                  : 'bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-100 rounded-tl-xs border border-slate-200 dark:border-slate-800'
+                  ? 'bg-terracotta text-white rounded-tr-xs shadow-md font-medium' 
+                  : 'bg-slate-50 text-slate-800 rounded-tl-xs border border-slate-200/80 shadow-xs'
               }`}>
                 {isUser ? (
                   <div className="whitespace-pre-wrap font-sans">{msg.content}</div>
                 ) : (
                   <MarkdownRenderer content={msg.content} />
                 )}
-                <div className={`text-[10px] mt-1.5 text-right ${isUser ? 'text-amber-200' : 'text-slate-400'}`}>
+                <div className={`text-[10px] mt-2 text-right ${isUser ? 'text-amber-200' : 'text-slate-400 font-mono'}`}>
                   {msg.timestamp}
                 </div>
               </div>
@@ -226,31 +227,31 @@ export default function AiConsultantPage() {
           );
         })}
         {isStreaming && (
-          <div className="flex items-center gap-2 text-xs text-amber-600 dark:text-amber-400 italic animate-pulse">
+          <div className="flex items-center gap-2 text-xs text-terracotta font-semibold animate-pulse">
             <Sparkles className="w-4 h-4 animate-spin" />
-            <span>AI Consultant sedang berpikir & menyusun rekomendasi...</span>
+            <span>AI Consultant sedang menganalisis data &amp; merumuskan rekomendasi...</span>
           </div>
         )}
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Chat Input Bar */}
+      {/* 4. Chat Input Bar */}
       <form 
         onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-        className="flex items-center gap-2 bg-white dark:bg-slate-800 p-2 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm"
+        className="flex items-center gap-2 bg-white p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm"
       >
         <input 
           type="text"
-          placeholder="Tanyakan analisis keuangan, rekomendasi stok, atau event DIY-Jateng..."
+          placeholder="Tanyakan analisis keuangan, rekomendasi stok ROP, atau event daerah..."
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           disabled={isStreaming}
-          className="flex-1 bg-transparent px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none placeholder-slate-400"
+          className="flex-1 bg-transparent px-4 py-2.5 text-xs sm:text-sm text-slate-900 focus:outline-none placeholder:text-slate-400 font-medium"
         />
         <button
           type="submit"
           disabled={!inputMessage.trim() || isStreaming}
-          className="p-3 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white rounded-xl shadow-md transition-colors"
+          className="p-3 bg-terracotta hover:bg-terracotta-hover disabled:opacity-40 text-white rounded-2xl shadow-md shadow-terracotta/25 transition-all cursor-pointer"
         >
           <Send className="w-4 h-4" />
         </button>

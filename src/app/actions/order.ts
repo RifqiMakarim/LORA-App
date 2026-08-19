@@ -123,7 +123,7 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         // 6. Notifikasi WA Penjual & Console.log simulasi Link WA
         if (orderData?.id && orderData?.wa_token) {
             const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-            const actionUrl = `${appUrl}/toko/dashboard/pesanan?highlight=${orderData.id}`;
+            const actionUrl = `${appUrl}/dashboard/pesanan?highlight=${orderData.id}`;
 
             console.log('Simulasi Link WA: ' + actionUrl);
 

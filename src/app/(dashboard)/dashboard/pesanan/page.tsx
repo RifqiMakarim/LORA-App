@@ -2,13 +2,18 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import SellerOrdersClientView from './SellerOrdersClientView';
 
+export const metadata = {
+    title: 'Kelola Pesanan Masuk | LORA Seller Centre',
+    description: 'Pantau transaksi dan proses pesanan masuk dari pembeli toko UMKM Anda.',
+};
+
 interface PageProps {
     searchParams: Promise<{
         highlight?: string;
     }>;
 }
 
-export default async function TokoDashboardPesananPage({ searchParams }: PageProps) {
+export default async function SellerOrdersPage({ searchParams }: PageProps) {
     const { highlight } = await searchParams;
     const supabase = await createClient();
 
