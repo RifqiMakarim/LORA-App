@@ -25,6 +25,53 @@ interface LocalEvent {
   expected_tourist_impact: 'low' | 'medium' | 'high' | 'massive';
 }
 
+const REGIONAL_CITIES: Record<string, string[]> = {
+  'DI Yogyakarta': [
+    'Kabupaten Bantul',
+    'Kabupaten Gunungkidul',
+    'Kabupaten Kulon Progo',
+    'Kabupaten Sleman',
+    'Kota Yogyakarta'
+  ],
+  'Jawa Tengah': [
+    'Kabupaten Banjarnegara',
+    'Kabupaten Banyumas',
+    'Kabupaten Batang',
+    'Kabupaten Blora',
+    'Kabupaten Boyolali',
+    'Kabupaten Brebes',
+    'Kabupaten Cilacap',
+    'Kabupaten Demak',
+    'Kabupaten Grobogan',
+    'Kabupaten Jepara',
+    'Kabupaten Karanganyar',
+    'Kabupaten Kebumen',
+    'Kabupaten Kendal',
+    'Kabupaten Klaten',
+    'Kabupaten Kudus',
+    'Kabupaten Magelang',
+    'Kabupaten Pati',
+    'Kabupaten Pekalongan',
+    'Kabupaten Pemalang',
+    'Kabupaten Purbalingga',
+    'Kabupaten Purworejo',
+    'Kabupaten Rembang',
+    'Kabupaten Semarang',
+    'Kabupaten Sragen',
+    'Kabupaten Sukoharjo',
+    'Kabupaten Tegal',
+    'Kabupaten Temanggung',
+    'Kabupaten Wonogiri',
+    'Kabupaten Wonosobo',
+    'Kota Magelang',
+    'Kota Pekalongan',
+    'Kota Salatiga',
+    'Kota Semarang',
+    'Kota Surakarta',
+    'Kota Tegal'
+  ]
+};
+
 interface EventsClientProps {
   events: LocalEvent[];
   isAdmin: boolean;
@@ -45,15 +92,8 @@ export default function EventsClient({
   const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  // Ambil Kabupaten/Kota berdasarkan provinsi yang dipilih secara dinamis
-  const uniqueCities = Array.from(
-    new Set(
-      events
-        .filter((e) => selectedProvince === 'all' || e.province_name === selectedProvince)
-        .map((e) => e.city_name)
-        .filter((city): city is string => !!city)
-    )
-  ).sort();
+  // Ambil Kabupaten/Kota berdasarkan provinsi yang dipilih dari data real
+  const uniqueCities = selectedProvince === 'all' ? [] : (REGIONAL_CITIES[selectedProvince] || []);
 
   const handleProvinceChange = (province: string) => {
     setSelectedProvince(province);
@@ -207,8 +247,7 @@ export default function EventsClient({
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <LayoutGrid className="w-3.5 h-3.5" />
-            Daftar Kartu
+            Daftar Event & Tren
           </button>
           <button
             onClick={() => setActiveView('calendar')}
@@ -218,8 +257,7 @@ export default function EventsClient({
                 : 'text-slate-500 hover:text-slate-800'
             }`}
           >
-            <Calendar className="w-3.5 h-3.5" />
-            Kalender Visual
+            Kalender Event & Tren
           </button>
         </div>
       </div>
