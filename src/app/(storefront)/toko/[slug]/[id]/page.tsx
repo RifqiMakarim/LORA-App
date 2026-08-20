@@ -57,7 +57,7 @@ export default async function ProductDetailPage({ params }: PageProps) {
 
     const business = Array.isArray(product.businesses) ? product.businesses[0] : product.businesses;
 
-    if (!business) {
+    if (!business || (business.slug && business.slug !== slug)) {
         notFound();
     }
 
