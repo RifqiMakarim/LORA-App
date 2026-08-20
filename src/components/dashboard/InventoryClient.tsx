@@ -63,6 +63,13 @@ export default function InventoryClient({
   const [formDescription, setFormDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
+  // Kategori CRUD State
+  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
+
   // Formatter mata uang Rupiah
   const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -72,6 +79,8 @@ export default function InventoryClient({
     }).format(val);
   };
 
+  const defaultCategories = ['Batik', 'Kuliner', 'Kerajinan', 'Aksesori', 'Lainnya'];
+
   // Kategori unik dari produk yang ada
   const categoriesList = useMemo(() => {
     const list = new Set<string>();
@@ -80,6 +89,12 @@ export default function InventoryClient({
     });
     return Array.from(list);
   }, [products]);
+
+  // Gabungkan kategori bawaan, kategori dari produk, dan kategori kustom
+  const allCategories = useMemo(() => {
+    const set = new Set([...defaultCategories, ...categoriesList, ...customCategories]);
+    return Array.from(set);
+  }, [categoriesList, customCategories]);
 
   // Klasifikasi Status Inventaris per Produk
   const classifiedProducts = useMemo(() => {
@@ -171,6 +186,71 @@ export default function InventoryClient({
     setIsModalOpen(true);
   };
 
+  // Kategori CRUD Handlers
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) {
+      toast.error('Nama kategori tidak boleh kosong.');
+      return;
+    }
+    if (allCategories.includes(newCategoryName.trim())) {
+      toast.error('Kategori sudah terdaftar.');
+      return;
+    }
+    setCustomCategories(prev => [...prev, newCategoryName.trim()]);
+    setNewCategoryName('');
+    toast.success('Kategori baru ditambahkan ke pilihan!');
+  };
+
+  const handleRenameCategory = async (oldName: string, newName: string) => {
+    if (!newName.trim()) {
+      toast.error('Nama kategori baru tidak boleh kosong.');
+      return;
+    }
+    if (oldName === newName) {
+      setEditingCategoryIndex(null);
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/seller/categories', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ oldCategory: oldName, newCategory: newName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal mengubah kategori');
+
+      toast.success('Kategori berhasil diperbarui!');
+      setCustomCategories(prev => prev.map(c => c === oldName ? newName.trim() : c));
+      setEditingCategoryIndex(null);
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal memperbarui kategori');
+    }
+  };
+
+  const handleDeleteCategory = async (catName: string) => {
+    if (catName === 'Lainnya') {
+      toast.error('Kategori "Lainnya" adalah kategori default sistem dan tidak dapat dihapus.');
+      return;
+    }
+    if (!confirm(`Apakah Anda yakin ingin menghapus kategori "${catName}"? Produk dengan kategori ini akan dipindahkan ke "Lainnya".`)) return;
+
+    try {
+      const res = await fetch(`/api/seller/categories?category=${encodeURIComponent(catName)}`, {
+        method: 'DELETE',
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menghapus kategori');
+
+      toast.success('Kategori berhasil dihapus.');
+      setCustomCategories(prev => prev.filter(c => c !== catName));
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menghapus kategori');
+    }
+  };
+
   // Handle Delete Produk
   const handleDelete = async (id: string) => {
     if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) return;
@@ -215,14 +295,23 @@ export default function InventoryClient({
       return;
     }
 
+    const priceNum = Number(formPrice);
+    const stockNum = Number(formStock);
+    const minStockNum = Number(formMinStock);
+
+    if (priceNum < 0 || stockNum < 0 || minStockNum < 0) {
+      toast.error('Harga, stok awal, dan batas aman ROP tidak boleh bernilai negatif.');
+      return;
+    }
+
     setSubmitting(true);
     const payload = {
       id: editingId,
       name: formName,
       category: formCategory,
-      price: Number(formPrice),
-      stock: Number(formStock),
-      min_stock: Number(formMinStock),
+      price: priceNum,
+      stock: stockNum,
+      min_stock: minStockNum,
       image_url: formImageUrl || null,
       description: formDescription || null,
     };
@@ -265,13 +354,23 @@ export default function InventoryClient({
           </p>
         </div>
 
-        <button
-          onClick={handleOpenAdd}
-          className="inline-flex items-center gap-2 px-5 py-3 bg-terracotta hover:bg-terracotta-hover text-white text-xs font-bold rounded-2xl shadow-lg shadow-terracotta/30 transition-all hover:scale-[1.02] cursor-pointer self-start sm:self-center"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Tambah Produk</span>
-        </button>
+        <div className="flex flex-row items-center gap-2 sm:gap-3 self-start sm:self-center">
+          <button
+            type="button"
+            onClick={() => setIsCategoriesModalOpen(true)}
+            className="inline-flex items-center gap-2 px-4 py-3 bg-white hover:bg-slate-50 text-indigo-950 text-xs font-bold rounded-2xl border border-slate-200 shadow-xs transition-all hover:scale-[1.02] cursor-pointer"
+          >
+            <Layers className="w-4 h-4" />
+            <span>Kelola Kategori</span>
+          </button>
+          <button
+            onClick={handleOpenAdd}
+            className="inline-flex items-center gap-2 px-5 py-3 bg-terracotta hover:bg-terracotta-hover text-white text-xs font-bold rounded-2xl shadow-lg shadow-terracotta/30 transition-all hover:scale-[1.02] cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tambah Produk</span>
+          </button>
+        </div>
       </div>
 
       {/* Summary Cards Grid */}
@@ -349,10 +448,10 @@ export default function InventoryClient({
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="w-full md:w-40 py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-xs font-bold focus:outline-hidden"
+              className="w-full md:w-40 py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl text-xs font-bold focus:outline-hidden cursor-pointer"
             >
               <option value="all">Semua Kategori</option>
-              {categoriesList.map(cat => (
+              {allCategories.map(cat => (
                 <option key={cat} value={cat}>{cat}</option>
               ))}
             </select>
@@ -513,13 +612,11 @@ export default function InventoryClient({
                   <select
                     value={formCategory}
                     onChange={(e) => setFormCategory(e.target.value)}
-                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-bold focus:outline-hidden"
+                    className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-xs font-bold focus:outline-hidden cursor-pointer"
                   >
-                    <option value="Batik">Batik</option>
-                    <option value="Kuliner">Kuliner (Makanan/Oleh-oleh)</option>
-                    <option value="Kerajinan">Kerajinan Tangan</option>
-                    <option value="Aksesori">Aksesori</option>
-                    <option value="Lainnya">Lainnya</option>
+                    {allCategories.map(cat => (
+                      <option key={cat} value={cat}>{cat}</option>
+                    ))}
                   </select>
                 </div>
 
@@ -530,10 +627,11 @@ export default function InventoryClient({
                     <input
                       type="number"
                       required
+                      min="0"
                       placeholder="Contoh: 150000"
                       value={formPrice}
                       onChange={(e) => setFormPrice(e.target.value)}
-                      className="w-full pl-9 pr-3 py-2.5 border border-slate-200 focus:border-slate-350 rounded-xl text-xs font-bold focus:outline-hidden focus:ring-1 focus:ring-slate-300"
+                      className="w-full pl-9 pr-3 py-2.5 border border-slate-200 focus:border-slate-350 rounded-xl text-xs font-bold focus:outline-hidden focus:ring-1 focus:ring-slate-300 no-spinner"
                     />
                   </div>
                 </div>
@@ -545,6 +643,7 @@ export default function InventoryClient({
                   <input
                     type="number"
                     required
+                    min="0"
                     placeholder="Contoh: 50"
                     value={formStock}
                     onChange={(e) => setFormStock(e.target.value)}
@@ -557,6 +656,7 @@ export default function InventoryClient({
                   <input
                     type="number"
                     required
+                    min="0"
                     placeholder="Contoh: 10"
                     value={formMinStock}
                     onChange={(e) => setFormMinStock(e.target.value)}
@@ -605,6 +705,119 @@ export default function InventoryClient({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Categories CRUD Modal */}
+      {isCategoriesModalOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-in fade-in duration-200">
+          <div className="bg-white border border-slate-200/90 rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl p-6 space-y-6">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h3 className="text-base sm:text-lg font-outfit font-extrabold text-slate-900 flex items-center gap-1.5">
+                <Layers className="w-5 h-5 text-indigo-950" /> Kelola Kategori Produk
+              </h3>
+              <button
+                onClick={() => {
+                  setIsCategoriesModalOpen(false);
+                  setEditingCategoryIndex(null);
+                }}
+                className="text-slate-400 hover:text-slate-700 font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Add Category Form */}
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Tambah Kategori Baru</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nama kategori..."
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  className="flex-1 px-3 py-2 border border-slate-200 focus:border-slate-350 rounded-xl text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-slate-300"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCategory}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Tambah
+                </button>
+              </div>
+            </div>
+
+            {/* Categories List */}
+            <div className="space-y-3">
+              <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Daftar Kategori Aktif ({allCategories.length})</label>
+              <div className="border border-slate-200/80 rounded-2xl divide-y divide-slate-100 max-h-[40vh] overflow-y-auto">
+                {allCategories.map((cat, idx) => {
+                  const isDefault = defaultCategories.includes(cat);
+                  const isEditing = editingCategoryIndex === idx;
+
+                  return (
+                    <div key={cat} className="flex items-center justify-between p-3.5 hover:bg-slate-50/50">
+                      {isEditing ? (
+                        <div className="flex items-center gap-2 flex-1 mr-2">
+                          <input
+                            type="text"
+                            value={editingCategoryName}
+                            onChange={(e) => setEditingCategoryName(e.target.value)}
+                            className="flex-1 px-2.5 py-1.5 border border-slate-200 focus:border-slate-350 rounded-lg text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-slate-300"
+                            autoFocus
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleRenameCategory(cat, editingCategoryName)}
+                            className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-bold cursor-pointer"
+                          >
+                            Simpan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setEditingCategoryIndex(null)}
+                            className="px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-[10px] font-bold cursor-pointer"
+                          >
+                            Batal
+                          </button>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-bold text-slate-800">{cat}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingCategoryIndex(idx);
+                                setEditingCategoryName(cat);
+                              }}
+                              className="p-1 hover:bg-slate-100 rounded text-slate-550 hover:text-indigo-650 transition-colors"
+                              title="Ubah Nama Kategori"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                            {cat !== 'Lainnya' && (
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCategory(cat)}
+                                className="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-rose-600 transition-colors"
+                                title="Hapus Kategori"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           </div>
         </div>
       )}

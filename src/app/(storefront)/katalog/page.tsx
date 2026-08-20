@@ -25,14 +25,6 @@ interface ProductWithBusiness {
     businesses: BusinessRel | BusinessRel[] | null;
 }
 
-const CATEGORIES = [
-    'Semua Produk',
-    'Batik & Kain',
-    'Kuliner & Oleh-oleh',
-    'Kerajinan Tangan',
-    'Fashion & Aksesoris',
-];
-
 interface KatalogPageProps {
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
@@ -50,6 +42,18 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
     const categoryTerm = categoryRaw.trim();
 
     const supabase = await createClient();
+
+    // Ambil kategori unik yang aktif di database secara dinamis
+    const { data: catData } = await supabase
+        .from('products')
+        .select('category')
+        .eq('is_active', true);
+    
+    const uniqueCats = Array.from(
+        new Set((catData || []).map((p) => p.category).filter((c): c is string => !!c))
+    ).sort();
+    
+    const categories = ['Semua Produk', ...uniqueCats];
 
     // Inisialisasi Dynamic Query Supabase
     let query = supabase
@@ -96,7 +100,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
             </div>
 
             {/* Client Component: Search Bar & Category Filter Bar */}
-            <KatalogFilter categories={CATEGORIES} />
+            <KatalogFilter categories={categories} />
 
             {/* Product Grid Section Header */}
             <div suppressHydrationWarning className="space-y-4">

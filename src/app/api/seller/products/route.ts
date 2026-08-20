@@ -55,6 +55,7 @@ export async function POST(request: Request) {
         category: category || 'Default',
         price: Number(price),
         stock: Number(stock),
+        min_stock: min_stock !== undefined ? Number(min_stock) : 10,
         image_url: image_url || null,
         is_active: true,
       })
@@ -115,6 +116,7 @@ export async function PUT(request: Request) {
         category: category !== undefined ? category : undefined,
         price: price !== undefined ? Number(price) : undefined,
         stock: stock !== undefined ? Number(stock) : undefined,
+        min_stock: min_stock !== undefined ? Number(min_stock) : undefined,
         image_url: image_url !== undefined ? image_url : undefined,
         is_active: is_active !== undefined ? !!is_active : undefined,
       })
