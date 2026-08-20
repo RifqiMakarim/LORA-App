@@ -133,20 +133,26 @@ export default function AiConsultantPage() {
   };
 
   return (
-    <div className="space-y-6 pb-6 h-[calc(100vh-6.5rem)] flex flex-col">
-      {/* 1. Header Banner Selaras Dashboard LORA */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="space-y-1">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-900 rounded-full text-xs font-bold">
-            <Sparkles className="w-3.5 h-3.5 text-terracotta" />
-            <span>LORA Business Intelligence</span>
+    <div className="flex flex-col h-[calc(100dvh-5.5rem)] sm:h-[calc(100dvh-6.5rem)] lg:h-[calc(100dvh-7.5rem)] min-h-[620px] gap-3 pb-2">
+      {/* 1. Header Banner Selaras Dashboard LORA (Compact & Modern) */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl px-4 py-3 sm:px-6 sm:py-3.5 shadow-xs flex items-center justify-between gap-3 shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-terracotta shrink-0 shadow-xs">
+            <Sparkles className="w-5 h-5 text-terracotta" />
           </div>
-          <h1 className="text-xl sm:text-2xl font-outfit font-black text-slate-900 tracking-tight">
-            AI Business Consultant
-          </h1>
-          <p className="text-xs text-slate-500 font-medium">
-            Conversational BI Real-Time berbasis konteks data 360° toko &amp; event DIY-Jateng
-          </p>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h1 className="text-base sm:text-lg font-outfit font-black text-slate-900 tracking-tight leading-none">
+                AI Business Consultant
+              </h1>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 bg-amber-50 border border-amber-200 text-amber-900 rounded-full text-[10px] font-bold">
+                LORA Conversational BI
+              </span>
+            </div>
+            <p className="text-[11px] sm:text-xs text-slate-500 font-medium truncate mt-0.5">
+              Analisis Real-Time 360° Penjualan, Stok ROP, Segmen Pelanggan &amp; Event DIY-Jateng
+            </p>
+          </div>
         </div>
 
         <button 
@@ -158,16 +164,19 @@ export default function AiConsultantPage() {
               timestamp: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
             }]);
           }}
-          className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer self-start sm:self-auto"
+          className="px-3 py-1.5 sm:px-3.5 sm:py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shrink-0"
           title="Reset Percakapan"
         >
           <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
-          <span>Reset Chat</span>
+          <span className="hidden sm:inline">Reset Chat</span>
         </button>
       </div>
 
-      {/* 2. Quick Prompt Chips */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      {/* 2. Quick Prompt Chips (Sleek Horizontal Scroll Bar) */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-0.5 shrink-0 scrollbar-none">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1.5 pl-1">
+          <Sparkles className="w-3.5 h-3.5 text-terracotta" /> Saran Cepat:
+        </span>
         {QUICK_PROMPTS.map((item, idx) => {
           const Icon = item.icon;
           return (
@@ -175,22 +184,17 @@ export default function AiConsultantPage() {
               key={idx}
               disabled={isStreaming}
               onClick={() => handleSendMessage(item.prompt)}
-              className="p-3.5 bg-white border border-slate-200/90 hover:border-terracotta hover:bg-amber-50/20 rounded-2xl text-left transition-all text-xs group shadow-xs flex flex-col justify-between gap-2 cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-amber-50/80 border border-slate-200/90 hover:border-amber-300 text-slate-700 hover:text-amber-950 rounded-xl text-xs font-semibold transition-all shadow-2xs whitespace-nowrap shrink-0 group cursor-pointer disabled:opacity-50"
             >
-              <div className="flex items-center justify-between">
-                <div className="p-1.5 bg-amber-50 text-terracotta rounded-xl group-hover:scale-105 transition-transform">
-                  <Icon className="w-4 h-4" />
-                </div>
-                <Sparkles className="w-3.5 h-3.5 text-slate-300 group-hover:text-terracotta transition-colors" />
-              </div>
-              <span className="font-bold text-slate-900 line-clamp-1">{item.label}</span>
+              <Icon className="w-3.5 h-3.5 text-terracotta group-hover:scale-110 transition-transform" />
+              <span>{item.label}</span>
             </button>
           );
         })}
       </div>
 
-      {/* 3. Main Chat Container */}
-      <div className="flex-1 bg-white rounded-3xl border border-slate-200/90 shadow-xs p-4 sm:p-6 overflow-y-auto space-y-4">
+      {/* 3. Main Chat Container (Expanded High-Capacity Viewport) */}
+      <div className="flex-1 min-h-[440px] sm:min-h-[520px] lg:min-h-[580px] bg-white rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-xs p-4 sm:p-6 overflow-y-auto space-y-4 scrollbar-thin scrollbar-thumb-slate-200 hover:scrollbar-thumb-slate-300">
         {messages.map((msg) => {
           const isUser = msg.sender === 'user';
 
@@ -209,7 +213,7 @@ export default function AiConsultantPage() {
               </div>
 
               {/* Message Content Bubble */}
-              <div className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 sm:p-5 text-xs sm:text-sm leading-relaxed ${
+              <div className={`max-w-[88%] sm:max-w-[80%] rounded-3xl p-4 sm:p-5 text-xs sm:text-sm leading-relaxed ${
                 isUser 
                   ? 'bg-terracotta text-white rounded-tr-xs shadow-md font-medium' 
                   : 'bg-slate-50 text-slate-800 rounded-tl-xs border border-slate-200/80 shadow-xs'
@@ -227,7 +231,7 @@ export default function AiConsultantPage() {
           );
         })}
         {isStreaming && (
-          <div className="flex items-center gap-2 text-xs text-terracotta font-semibold animate-pulse">
+          <div className="flex items-center gap-2 text-xs text-terracotta font-semibold animate-pulse py-2">
             <Sparkles className="w-4 h-4 animate-spin" />
             <span>AI Consultant sedang menganalisis data &amp; merumuskan rekomendasi...</span>
           </div>
@@ -238,7 +242,7 @@ export default function AiConsultantPage() {
       {/* 4. Chat Input Bar */}
       <form 
         onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-        className="flex items-center gap-2 bg-white p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-sm"
+        className="shrink-0 flex items-center gap-2 bg-white p-2 sm:p-2.5 rounded-2xl sm:rounded-3xl border border-slate-200/90 shadow-xs focus-within:border-terracotta/60 focus-within:ring-2 focus-within:ring-amber-500/20 transition-all"
       >
         <input 
           type="text"
