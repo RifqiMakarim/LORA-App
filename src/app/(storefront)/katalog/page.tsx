@@ -53,7 +53,11 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
         new Set((catData || []).map((p) => p.category).filter((c): c is string => !!c))
     ).sort();
     
-    const categories = ['Semua Produk', ...uniqueCats];
+    const uniqueCatsFiltered = uniqueCats.filter(c => c !== 'Lainnya');
+    const categories = ['Semua Produk', ...uniqueCatsFiltered];
+    if (uniqueCats.includes('Lainnya')) {
+        categories.push('Lainnya');
+    }
 
     // Inisialisasi Dynamic Query Supabase
     let query = supabase

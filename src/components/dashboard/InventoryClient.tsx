@@ -90,10 +90,11 @@ export default function InventoryClient({
     return Array.from(list);
   }, [products]);
 
-  // Gabungkan kategori bawaan, kategori dari produk, dan kategori kustom
+  // Gabungkan kategori bawaan, kategori dari produk, dan kategori kustom, lalu pastikan "Lainnya" selalu berada di akhir list
   const allCategories = useMemo(() => {
     const set = new Set([...defaultCategories, ...categoriesList, ...customCategories]);
-    return Array.from(set);
+    const listWithoutLainnya = Array.from(set).filter(c => c !== 'Lainnya');
+    return [...listWithoutLainnya, 'Lainnya'];
   }, [categoriesList, customCategories]);
 
   // Klasifikasi Status Inventaris per Produk
