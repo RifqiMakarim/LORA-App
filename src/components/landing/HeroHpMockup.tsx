@@ -21,10 +21,10 @@ export default function HeroHpMockup() {
                 className="relative group transition-all duration-500 w-full flex justify-center z-10"
             >
                 <Image
-                    src="/images/hape.png"
+                    src="/images/maskot-lora.png"
                     alt="Mockup Aplikasi LORA di Smartphone"
-                    width={800}
-                    height={1000}
+                    width={400}
+                    height={400}
                     sizes="(max-width: 768px) 100vw, 50vw"
                     className="relative z-10 w-full h-auto max-h-[60vh] sm:max-h-[66vh] lg:max-h-[72vh] xl:max-h-[76vh] object-contain drop-shadow-[0_20px_40px_rgba(0,0,0,0.6)] sm:drop-shadow-[0_30px_60px_rgba(0,0,0,0.8)] transition-all duration-500 group-hover:scale-102 group-hover:drop-shadow-[0_35px_70px_rgba(217,119,6,0.45)] mx-auto"
                     priority
