@@ -63,6 +63,8 @@ Project ini dibangun dengan pendekatan **Spec-Driven Development** sebagai acuan
 - 🎨 [**Design.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Design.md): UI/UX Design System (Deep Indigo `#1E293B` & Terracotta Warm `#D97706`).
 - 📜 [**Rules.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Rules.md): Aturan Mutlak & Standar Rekayasa Perangkat Lunak untuk AI Coding Agent.
 - 🗄️ [**Schema.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Schema.md): DDL SQL Lengkap, RLS Policies, ERD Blueprint, & Seed Data DIY-Jateng.
+- 📈 [**Forecasting.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Forecasting.md): Model Matematika Holt-Winters Additive, Event Overlay, & Prediksi Penjualan AI.
+- 👥 [**CustomerSegmentation.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/CustomerSegmentation.md): Engine Segmentasi RFM, Kalkulasi CLV, Alat CRM Direct WhatsApp & Generator Voucher.
 
 ---
 

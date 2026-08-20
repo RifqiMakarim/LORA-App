@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     }
 
     const ai = new GoogleGenAI({ apiKey });
-    const candidateModels = ['gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-flash-latest'];
+    const candidateModels = ['gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-3.5-flash', 'gemini-flash-latest'];
     let responseStream: AsyncIterable<{ text?: string }> | null = null;
 
     // Coba model prioritas dengan fallback

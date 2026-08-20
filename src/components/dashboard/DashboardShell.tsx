@@ -22,6 +22,7 @@ import {
     Shield
 } from 'lucide-react';
 import { logout } from '@/app/(auth)/actions';
+import NotificationDropdown from '@/components/dashboard/NotificationDropdown';
 
 interface DashboardShellProps {
     children: React.ReactNode;
@@ -326,8 +327,10 @@ export default function DashboardShell({
                         </div>
                     </div>
 
-                    {/* Right User Status */}
-                    <div className="flex items-center gap-3">
+                    {/* Right User Status & Notification Alert Bell */}
+                    <div className="flex items-center gap-2.5 sm:gap-3">
+                        <NotificationDropdown isAdminRoute={isAdminRoute} />
+
                         <div className="hidden sm:flex flex-col items-end text-right">
                             <span className="text-xs font-bold text-slate-900">{userName}</span>
                             <span className={`text-[10px] ${isAdminRoute ? 'text-emerald-700 bg-emerald-50 border-emerald-250/70' : 'text-amber-700 bg-amber-50 border-amber-200/70'} font-semibold px-2 py-0.5 rounded-md border`}>

@@ -427,5 +427,39 @@ export function generateAutoInsight(
 
   const horizonDays = horizon === '7_days' ? '7' : '15';
 
-  return `Prediksi ${horizonDays} hari ke depan diperkirakan ${trendText} dari rata-rata historis. Puncak omzet diprediksi pada hari ${peakDayName}, sementara titik terendah pada ${lowestDayName}. Sesuaikan kuota stok harian untuk efisiensi modal kas.`;
+  // Deteksi event lokal pada data proyeksi
+  const eventsFound = new Map<string, { title: string; dates: string[]; city?: string | null; province: string; impact: string }>();
+  for (const p of forecastData) {
+    if (p.associated_event) {
+      const ev = p.associated_event;
+      if (!eventsFound.has(ev.id)) {
+        eventsFound.set(ev.id, {
+          title: ev.title,
+          dates: [p.date],
+          city: ev.city_name,
+          province: ev.province_name,
+          impact: ev.impact,
+        });
+      } else {
+        eventsFound.get(ev.id)!.dates.push(p.date);
+      }
+    }
+  }
+
+  let eventSentence = '';
+  if (eventsFound.size > 0) {
+    const eventDetails = Array.from(eventsFound.values()).map(ev => {
+      const startObj = new Date(ev.dates[0]);
+      const endObj = new Date(ev.dates[ev.dates.length - 1]);
+      const startStr = `${startObj.getDate()} ${INDO_MONTHS[startObj.getMonth()]}`;
+      const endStr = `${endObj.getDate()} ${INDO_MONTHS[endObj.getMonth()]} ${endObj.getFullYear()}`;
+      const dateRange = ev.dates.length === 1 ? `${startStr} ${startObj.getFullYear()}` : `${startStr} - ${endStr}`;
+      const impactText = ev.impact === 'massive' ? '+75%' : ev.impact === 'high' ? '+45%' : '+25%';
+      const loc = ev.city ? `${ev.city}, ${ev.province}` : ev.province;
+      return `"${ev.title}" pada tanggal ${dateRange} di ${loc} (potensi lonjakan wisatawan ${impactText})`;
+    }).join('; ');
+    eventSentence = ` Terdapat agenda kebudayaan daerah: ${eventDetails}. Segera siapkan tambahan persediaan produk unggulan Anda!`;
+  }
+
+  return `Prediksi ${horizonDays} hari ke depan diperkirakan ${trendText} dari rata-rata historis. Puncak omzet diprediksi pada hari ${peakDayName}, sementara titik terendah pada ${lowestDayName}.${eventSentence}`;
 }

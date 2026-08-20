@@ -18,7 +18,11 @@ import {
     Building2,
     Banknote,
     Copy,
-    Loader2
+    Loader2,
+    Ticket,
+    Check,
+    X,
+    Sparkles
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCart } from '@/components/storefront/CartContext';
@@ -31,6 +35,16 @@ interface BusinessPaymentInfo {
     qris_image_url?: string | null;
     bank_name?: string | null;
     bank_account_number?: string | null;
+}
+
+interface AppliedVoucherData {
+    code: string;
+    discount_type: 'percent' | 'fixed';
+    discount_value: number;
+    discount_amount: number;
+    final_total: number;
+    starts_at?: string;
+    expires_at?: string;
 }
 
 export default function DedicatedCheckoutPage() {
@@ -57,7 +71,16 @@ export default function DedicatedCheckoutPage() {
     const [isPaymentSuccess, setIsPaymentSuccess] = useState(false);
     const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
+    // Voucher State
+    const [voucherInput, setVoucherInput] = useState('');
+    const [appliedVoucher, setAppliedVoucher] = useState<AppliedVoucherData | null>(null);
+    const [isValidatingVoucher, setIsValidatingVoucher] = useState(false);
+
     const storeTitle = businessInfo?.name || currentStoreName || slug.replace(/-/g, ' ').toUpperCase();
+
+    // Hitung total efektif setelah diskon voucher
+    const discountAmount = appliedVoucher ? appliedVoucher.discount_amount : 0;
+    const effectiveTotal = Math.max(0, cartTotal - discountAmount);
 
     // Guard: Mencegah ketidakcocokan toko pada keranjang aktif
     useEffect(() => {
@@ -100,6 +123,48 @@ export default function DedicatedCheckoutPage() {
         fetchBusinessPaymentData();
     }, [slug]);
 
+    // Apply Voucher Handler
+    const handleApplyVoucher = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        const codeToValidate = voucherInput.trim().toUpperCase();
+        if (!codeToValidate) {
+            toast.error('Silakan ketikkan kode voucher terlebih dahulu');
+            return;
+        }
+
+        setIsValidatingVoucher(true);
+        try {
+            const res = await fetch('/api/vouchers/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    slug,
+                    code: codeToValidate,
+                    cart_total: cartTotal,
+                }),
+            });
+
+            const data = await res.json();
+            if (res.ok && data.valid && data.voucher) {
+                setAppliedVoucher(data.voucher);
+                toast.success(data.message || `Voucher ${codeToValidate} berhasil digunakan!`);
+            } else {
+                toast.error(data.message || 'Kode voucher tidak valid atau tidak dapat digunakan.');
+            }
+        } catch (err) {
+            console.error('Error applying voucher:', err);
+            toast.error('Gagal memvalidasi voucher. Periksa koneksi Anda.');
+        } finally {
+            setIsValidatingVoucher(false);
+        }
+    };
+
+    const handleRemoveVoucher = () => {
+        setAppliedVoucher(null);
+        setVoucherInput('');
+        toast.success('Voucher diskon dibatalkan');
+    };
+
     // Submit Order Handler
     const handleCompleteOrder = async () => {
         if (isSubmittingOrder) return;
@@ -110,7 +175,7 @@ export default function DedicatedCheckoutPage() {
             const result = await createOrder({
                 storeSlug: slug,
                 business_id: businessInfo?.id,
-                totalAmount: cartTotal,
+                totalAmount: effectiveTotal,
                 paymentMethod: selectedPaymentMethod,
                 items: items.map((i) => ({
                     product_id: i.product.id,
@@ -290,7 +355,7 @@ export default function DedicatedCheckoutPage() {
                                         <button
                                             type="button"
                                             onClick={() => removeItem(product.id)}
-                                            className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors"
+                                            className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-colors cursor-pointer"
                                             title="Hapus Produk"
                                         >
                                             <Trash2 className="w-4 h-4" />
@@ -299,6 +364,72 @@ export default function DedicatedCheckoutPage() {
                                 </div>
                             ))}
                         </div>
+                    </div>
+
+                    {/* VOUCHER / KUPON PROMO SECTION */}
+                    <div className="bg-white p-5 sm:p-6 rounded-3xl border border-slate-200/90 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h2 className="text-base font-outfit font-bold text-slate-900 flex items-center gap-2">
+                                <Ticket className="w-4 h-4 text-terracotta" />
+                                <span>Kupon Promo &amp; Diskon Toko</span>
+                            </h2>
+                            {appliedVoucher && (
+                                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                                    <Check className="w-3 h-3 text-emerald-600" />
+                                    Voucher Terpasang
+                                </span>
+                            )}
+                        </div>
+
+                        {appliedVoucher ? (
+                            <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3">
+                                <div className="space-y-0.5">
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-mono font-extrabold text-emerald-900 tracking-wider text-sm">
+                                            {appliedVoucher.code}
+                                        </span>
+                                        <span className="text-xs bg-emerald-200/80 text-emerald-900 font-bold px-2 py-0.5 rounded-lg">
+                                            {appliedVoucher.discount_type === 'percent' ? `Hemat ${appliedVoucher.discount_value}%` : `Potongan Rp ${appliedVoucher.discount_value.toLocaleString('id-ID')}`}
+                                        </span>
+                                    </div>
+                                    <p className="text-xs text-emerald-700 font-medium">
+                                        Hemat Rp {appliedVoucher.discount_amount.toLocaleString('id-ID')} untuk transaksi ini
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleRemoveVoucher}
+                                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+                                    title="Hapus Voucher"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ) : (
+                            <form onSubmit={handleApplyVoucher} className="flex items-center gap-2">
+                                <div className="relative flex-1">
+                                    <Ticket className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Masukkan kode promo (misal: CHAMP20, KANGEN15)..."
+                                        value={voucherInput}
+                                        onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
+                                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold text-slate-900 uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/40"
+                                    />
+                                </div>
+                                <button
+                                    type="submit"
+                                    disabled={isValidatingVoucher || !voucherInput.trim()}
+                                    className="px-5 py-2.5 bg-terracotta hover:bg-terracotta-hover disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1.5"
+                                >
+                                    {isValidatingVoucher ? (
+                                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                    ) : (
+                                        <span>Gunakan</span>
+                                    )}
+                                </button>
+                            </form>
+                        )}
                     </div>
 
                     {/* PILIH METODE PEMBAYARAN (3 OPSI) */}
@@ -395,7 +526,7 @@ export default function DedicatedCheckoutPage() {
                                         <Banknote className="w-5 h-5 text-terracotta" />
                                         <span className="text-xs font-bold text-slate-900">Bayar di Kasir</span>
                                     </div>
-                                    <span className="text-[10px] text-slate-500 font-medium">Tunai saat Pengambilan</span>
+                                    <span className="text-[10px] text-slate-500 font-medium">Tunai di Tempat</span>
                                 </label>
                             </div>
                         )}
@@ -410,7 +541,7 @@ export default function DedicatedCheckoutPage() {
                             rows={3}
                             value={buyerNotes}
                             onChange={(e) => setBuyerNotes(e.target.value)}
-                            placeholder="Contoh: Tolong dikemas dengan bubble wrap tebal, atau pesan varian rasa cokelat..."
+                            placeholder="Contoh: Tolong dikemas dengan bubble wrap tebal, atau pesan varian motif batik..."
                             className="w-full p-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-terracotta/40 focus:bg-white transition-all"
                         />
                     </div>
@@ -421,6 +552,14 @@ export default function DedicatedCheckoutPage() {
                             <span>Total Harga Produk ({totalItemsCount} item):</span>
                             <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
                         </div>
+
+                        {appliedVoucher && (
+                            <div className="flex justify-between text-xs text-emerald-400 font-semibold">
+                                <span>Diskon Kupon ({appliedVoucher.code}):</span>
+                                <span>- Rp {appliedVoucher.discount_amount.toLocaleString('id-ID')}</span>
+                            </div>
+                        )}
+
                         <div className="flex justify-between text-xs text-slate-300">
                             <span>Metode Pembayaran Terpilih:</span>
                             <span className="font-bold text-amber-400 capitalize">
@@ -431,10 +570,11 @@ export default function DedicatedCheckoutPage() {
                                     : 'Bayar di Kasir (Tunai)'}
                             </span>
                         </div>
+
                         <div className="flex justify-between text-base font-outfit font-extrabold text-white pt-3 border-t border-slate-800">
                             <span>Total Pembayaran:</span>
                             <span className="text-amber-400 text-xl font-bold">
-                                Rp {cartTotal.toLocaleString('id-ID')}
+                                Rp {effectiveTotal.toLocaleString('id-ID')}
                             </span>
                         </div>
                     </div>
@@ -486,8 +626,13 @@ export default function DedicatedCheckoutPage() {
                             <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center space-y-1">
                                 <p className="text-[11px] text-amber-900 font-semibold">Total Tagihan QRIS:</p>
                                 <p className="text-2xl font-outfit font-black text-amber-900">
-                                    Rp {cartTotal.toLocaleString('id-ID')}
+                                    Rp {effectiveTotal.toLocaleString('id-ID')}
                                 </p>
+                                {appliedVoucher && (
+                                    <p className="text-[10px] text-emerald-700 font-bold">
+                                        *Hemat Rp {appliedVoucher.discount_amount.toLocaleString('id-ID')} dengan kupon {appliedVoucher.code}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Tombol Konfirmasi Pesanan */}
@@ -560,8 +705,13 @@ export default function DedicatedCheckoutPage() {
                             <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center space-y-1">
                                 <p className="text-[11px] text-amber-900 font-semibold">Total Transfer:</p>
                                 <p className="text-2xl font-outfit font-black text-amber-900">
-                                    Rp {cartTotal.toLocaleString('id-ID')}
+                                    Rp {effectiveTotal.toLocaleString('id-ID')}
                                 </p>
+                                {appliedVoucher && (
+                                    <p className="text-[10px] text-emerald-700 font-bold">
+                                        *Hemat Rp {appliedVoucher.discount_amount.toLocaleString('id-ID')} dengan kupon {appliedVoucher.code}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Tombol Konfirmasi Pesanan */}
@@ -598,7 +748,7 @@ export default function DedicatedCheckoutPage() {
                                 <ShieldCheck className="w-4 h-4 text-emerald-600" />
                             </div>
 
-                            {/* Kotak Instruksi Kasir (Persis seperti spesifikasi) */}
+                            {/* Kotak Instruksi Kasir */}
                             <div className="p-5 bg-amber-50 border border-amber-200 rounded-2xl space-y-2 text-left">
                                 <div className="flex items-start gap-2 text-amber-900">
                                     <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
@@ -614,8 +764,13 @@ export default function DedicatedCheckoutPage() {
                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center space-y-1">
                                 <p className="text-[11px] text-slate-500 font-semibold">Total Tagihan Tunai:</p>
                                 <p className="text-2xl font-outfit font-black text-slate-900">
-                                    Rp {cartTotal.toLocaleString('id-ID')}
+                                    Rp {effectiveTotal.toLocaleString('id-ID')}
                                 </p>
+                                {appliedVoucher && (
+                                    <p className="text-[10px] text-emerald-700 font-bold">
+                                        *Hemat Rp {appliedVoucher.discount_amount.toLocaleString('id-ID')} dengan kupon {appliedVoucher.code}
+                                    </p>
+                                )}
                             </div>
 
                             {/* Tombol Buat Pesanan Kasir */}
@@ -633,7 +788,7 @@ export default function DedicatedCheckoutPage() {
                                 ) : (
                                     <>
                                         <CheckCircle2 className="w-4 h-4" />
-                                        <span>Buat Pesanan & Bayar di Kasir</span>
+                                        <span>Buat Pesanan &amp; Bayar di Kasir</span>
                                     </>
                                 )}
                             </button>
