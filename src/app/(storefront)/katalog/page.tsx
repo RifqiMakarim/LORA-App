@@ -26,14 +26,6 @@ interface ProductWithBusiness {
     businesses: BusinessRel | BusinessRel[] | null;
 }
 
-const CATEGORIES = [
-    'Semua Produk',
-    'Batik & Kain',
-    'Kuliner & Oleh-oleh',
-    'Kerajinan Tangan',
-    'Fashion & Aksesoris',
-];
-
 interface KatalogPageProps {
     searchParams?: Promise<{ [key: string]: string | string[] | undefined }>;
 }
@@ -55,7 +47,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
 
     const supabase = await createClient();
 
-    // 1. Ambil Data Kategori Dinamis dari Tabel `product_categories`
+    // 1. Ambil Data Kategori Dinamis dari Tabel `product_categories` (Struktur Utama)
     const { data: rawCategories } = await supabase
         .from('product_categories')
         .select('name');
@@ -66,11 +58,15 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
                 .map(c => c.name?.trim())
                 .filter((name): name is string => Boolean(name && name.length > 0))
         )
-    );
+    ).sort(); // Sortir alfabetis
 
-    const categoriesList = uniqueCategoryNames.length > 0
-        ? ['Semua Produk', ...uniqueCategoryNames]
-        : ['Semua Produk', 'Batik & Kain', 'Kuliner & Oleh-oleh', 'Kerajinan Tangan', 'Fashion & Aksesoris'];
+    // Pisahkan 'Lainnya' agar selalu di akhir (Integrasi ide dari branch sebelah)
+    const uniqueCatsFiltered = uniqueCategoryNames.filter(c => c.toLowerCase() !== 'lainnya');
+    const categoriesList = ['Semua Produk', ...uniqueCatsFiltered];
+
+    if (uniqueCategoryNames.some(c => c.toLowerCase() === 'lainnya')) {
+        categoriesList.push('Lainnya');
+    }
 
     // 2. Ambil Data Kota secara Unik (Distinct) dari Tabel `businesses`
     const { data: rawCities } = await supabase
@@ -148,7 +144,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
             {/* Header Hero Banner Slider Telkomsel-Style */}
             <KatalogBannerSlider />
 
-            {/* Client Component: Search Bar & Integrated Dynamic Location Filter */}
+            {/* Client Component: Search Bar, Category, & Integrated Dynamic Location Filter */}
             <KatalogFilter categories={categoriesList} availableCities={availableCities} />
 
             {/* Product Grid Section Header */}
@@ -158,10 +154,10 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
                         {activeLocationLabel
                             ? `Kota: ${activeLocationLabel} ${categoryTerm && categoryTerm !== 'Semua Produk' ? `• Kategori: ${categoryTerm}` : ''}`
                             : categoryTerm && categoryTerm !== 'Semua Produk'
-                            ? `Kategori: ${categoryTerm}`
-                            : searchTerm
-                            ? `Hasil Pencarian: "${searchTerm}"`
-                            : 'Rekomendasi Produk Unggulan'}
+                                ? `Kategori: ${categoryTerm}`
+                                : searchTerm
+                                    ? `Hasil Pencarian: "${searchTerm}"`
+                                    : 'Rekomendasi Produk Unggulan'}
                     </h2>
                     <span className="text-xs text-slate-500 font-medium">
                         Menampilkan {products.length} Produk
