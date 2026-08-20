@@ -411,7 +411,7 @@ export default function DedicatedCheckoutPage() {
                                     <Ticket className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
                                     <input
                                         type="text"
-                                        placeholder="Masukkan kode promo (misal: CHAMP20, KANGEN15)..."
+                                        placeholder="Masukkan kode promo"
                                         value={voucherInput}
                                         onChange={(e) => setVoucherInput(e.target.value.toUpperCase())}
                                         className="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-mono font-bold text-slate-900 uppercase focus:bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/40"
