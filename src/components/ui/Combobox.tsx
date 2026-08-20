@@ -106,22 +106,24 @@ export default function Combobox({
 
             {/* Dropdown Menu Popover dengan Input Pencarian */}
             {isOpen && (
-                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl space-y-1 p-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150">
-                    {/* Input Filter Pencarian */}
-                    <div className="relative sticky top-0 bg-white pb-1.5 pt-0.5 z-10 border-b border-slate-100">
-                        <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                            placeholder={searchPlaceholder}
-                            className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/30"
-                            autoFocus
-                        />
+                <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-150 p-2 pt-0">
+                    {/* Input Filter Pencarian (Sticky Top dengan Solid White BG) */}
+                    <div className="sticky top-0 z-10 bg-white pt-2 pb-2 border-b border-slate-100 -mx-2 px-2">
+                        <div className="relative">
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                            <input
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder={searchPlaceholder}
+                                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/30"
+                                autoFocus
+                            />
+                        </div>
                     </div>
 
                     {/* List Opsi Pilihan */}
-                    <div className="space-y-0.5">
+                    <div className="space-y-0.5 pt-1">
                         {filteredOptions.length === 0 ? (
                             <p className="text-xs text-slate-400 italic text-center py-3">
                                 Tidak ada data ditemukan

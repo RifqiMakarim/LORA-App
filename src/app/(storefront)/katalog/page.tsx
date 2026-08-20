@@ -55,7 +55,24 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
 
     const supabase = await createClient();
 
-    // 1. Ambil Data Kota secara Unik (Distinct) dari Tabel `businesses`
+    // 1. Ambil Data Kategori Dinamis dari Tabel `product_categories`
+    const { data: rawCategories } = await supabase
+        .from('product_categories')
+        .select('name');
+
+    const uniqueCategoryNames: string[] = Array.from(
+        new Set(
+            (rawCategories || [])
+                .map(c => c.name?.trim())
+                .filter((name): name is string => Boolean(name && name.length > 0))
+        )
+    );
+
+    const categoriesList = uniqueCategoryNames.length > 0
+        ? ['Semua Produk', ...uniqueCategoryNames]
+        : ['Semua Produk', 'Batik & Kain', 'Kuliner & Oleh-oleh', 'Kerajinan Tangan', 'Fashion & Aksesoris'];
+
+    // 2. Ambil Data Kota secara Unik (Distinct) dari Tabel `businesses`
     const { data: rawCities } = await supabase
         .from('businesses')
         .select('city_name')
@@ -69,7 +86,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
         )
     ).sort();
 
-    // 2. Inisialisasi Dynamic Query Supabase Produk
+    // 3. Inisialisasi Dynamic Query Supabase Produk
     let query = supabase
         .from('products')
         .select('*, businesses(name, slug, city_name, province_name)')
@@ -132,7 +149,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
             <KatalogBannerSlider />
 
             {/* Client Component: Search Bar & Integrated Dynamic Location Filter */}
-            <KatalogFilter categories={CATEGORIES} availableCities={availableCities} />
+            <KatalogFilter categories={categoriesList} availableCities={availableCities} />
 
             {/* Product Grid Section Header */}
             <div suppressHydrationWarning className="space-y-4">

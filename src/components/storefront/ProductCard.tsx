@@ -95,30 +95,33 @@ export default function ProductCard({ product, storeSlug, storeName, locationNam
                         </div>
                     )}
 
-                    {/* Location / Category Badge */}
-                    {locationName ? (
-                        <span className="absolute top-2 left-2 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-slate-900/80 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-bold rounded-lg sm:rounded-xl flex items-center gap-1">
-                            <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-terracotta" />
-                            {locationName}
-                        </span>
-                    ) : product.category ? (
-                        <span className="absolute top-2 left-2 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-slate-900/80 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-bold rounded-lg sm:rounded-xl">
-                            {product.category}
-                        </span>
-                    ) : null}
+                    {/* Top Overlay Badges Container */}
+                    <div className="absolute top-0 left-0 right-0 p-2 flex items-start justify-between gap-1.5 z-10 pointer-events-none">
+                        {/* Location / Category Badge */}
+                        {locationName ? (
+                            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-slate-900/80 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-bold rounded-lg sm:rounded-xl flex items-center gap-1 min-w-0 max-w-[65%] truncate">
+                                <MapPin className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-terracotta flex-shrink-0" />
+                                <span className="truncate">{locationName}</span>
+                            </span>
+                        ) : product.category ? (
+                            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-slate-900/80 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-bold rounded-lg sm:rounded-xl min-w-0 max-w-[65%] truncate">
+                                <span className="truncate">{product.category}</span>
+                            </span>
+                        ) : <div />}
 
-                    {/* Stock Badges */}
-                    {isOutOfStock ? (
-                        <span className="absolute top-2 right-2 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-600 text-white text-[9px] sm:text-[10px] font-bold rounded-lg sm:rounded-xl flex items-center gap-1 shadow-md">
-                            <PackageX className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                            Habis
-                        </span>
-                    ) : isLowStock ? (
-                        <span className="absolute top-2 right-2 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-amber-500 text-white text-[9px] sm:text-[10px] font-bold rounded-lg sm:rounded-xl flex items-center gap-1 shadow-md animate-pulse">
-                            <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3" />
-                            Sisa {product.stock}
-                        </span>
-                    ) : null}
+                        {/* Stock Badges */}
+                        {isOutOfStock ? (
+                            <span className="flex-shrink-0 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-rose-600 text-white text-[9px] sm:text-[10px] font-bold rounded-lg sm:rounded-xl flex items-center gap-1 shadow-md">
+                                <PackageX className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+                                <span>Habis</span>
+                            </span>
+                        ) : isLowStock ? (
+                            <span className="flex-shrink-0 px-2 py-0.5 sm:px-2.5 sm:py-1 bg-amber-500 text-white text-[9px] sm:text-[10px] font-bold rounded-lg sm:rounded-xl flex items-center gap-1 shadow-md animate-pulse">
+                                <AlertTriangle className="w-2.5 h-2.5 sm:w-3 sm:h-3 flex-shrink-0" />
+                                <span>Sisa {product.stock}</span>
+                            </span>
+                        ) : null}
+                    </div>
                 </div>
 
                 {/* Product Info Body */}

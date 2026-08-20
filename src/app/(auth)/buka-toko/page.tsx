@@ -7,6 +7,16 @@ import Swal from 'sweetalert2';
 import ImageUpload from '@/components/ImageUpload';
 import Combobox from '@/components/ui/Combobox';
 import { registerBusiness } from '@/app/actions/business';
+import {
+    Store,
+    AlertCircle,
+    QrCode,
+    Check,
+    Trash2,
+    UploadCloud,
+    Building2,
+    ArrowLeft
+} from 'lucide-react';
 
 // Opsi Bank Populer di Indonesia
 const BANK_OPTIONS = [
@@ -361,7 +371,7 @@ export default function BukaTokoPage() {
                     href="/"
                     className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 hover:text-terracotta transition-colors group"
                 >
-                    <span className="group-hover:-translate-x-1 transition-transform">&larr;</span>
+                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                     <span>Kembali ke Beranda</span>
                 </Link>
 
@@ -370,7 +380,8 @@ export default function BukaTokoPage() {
                     {/* Header Title */}
                     <div className="space-y-2 border-b border-slate-100 pb-6">
                         <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-full text-xs font-semibold">
-                            🏪 Pendaftaran Toko (Business)
+                            <Store className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Pendaftaran Toko (Business)</span>
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-outfit font-extrabold text-slate-900 tracking-tight">
                             Buka Toko Digital Anda
@@ -383,7 +394,7 @@ export default function BukaTokoPage() {
                     {/* Error Alert Box */}
                     {state?.error && (
                         <div className="p-4 bg-rose-50 border border-rose-200 text-rose-700 rounded-2xl text-xs flex items-start gap-3 animate-in fade-in duration-200">
-                            <span className="text-base leading-none">⚠️</span>
+                            <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
                             <div className="space-y-0.5">
                                 <p className="font-bold">Gagal Mendaftarkan Toko</p>
                                 <p>{state.error}</p>
@@ -616,7 +627,7 @@ export default function BukaTokoPage() {
                                 <div className="space-y-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                                     <div className="flex items-center justify-between">
                                         <label htmlFor="qris_file_input" className="block text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                                            <span>📱</span>
+                                            <QrCode className="w-4 h-4 text-terracotta" />
                                             <span>1. Unggah Gambar QRIS</span>
                                             <span className="text-[10px] text-slate-400 font-normal lowercase">(opsional jika ada rekening bank)</span>
                                         </label>
@@ -631,8 +642,9 @@ export default function BukaTokoPage() {
                                                     className="w-32 h-32 object-contain bg-white p-2 border border-slate-200 rounded-lg shadow-sm"
                                                 />
                                                 <div className="space-y-2 text-center sm:text-left">
-                                                    <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1 justify-center sm:justify-start">
-                                                        <span>✓</span> Gambar QRIS Siap
+                                                    <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5 justify-center sm:justify-start">
+                                                        <Check className="w-3.5 h-3.5 text-emerald-600" />
+                                                        <span>Gambar QRIS Siap</span>
                                                         {isUploadingQris && <span className="text-amber-600 text-[11px] font-normal animate-pulse">(Mengunggah...)</span>}
                                                     </p>
                                                     <p className="text-[11px] text-slate-500 truncate max-w-xs">
@@ -641,9 +653,10 @@ export default function BukaTokoPage() {
                                                     <button
                                                         type="button"
                                                         onClick={handleRemoveQris}
-                                                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1"
+                                                        className="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
                                                     >
-                                                        <span>🗑️</span> Hapus Gambar QRIS
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        <span>Hapus Gambar QRIS</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -661,7 +674,7 @@ export default function BukaTokoPage() {
                                                     className="flex flex-col items-center justify-center p-6 bg-white border-2 border-dashed border-slate-300 hover:border-terracotta rounded-xl cursor-pointer transition-all hover:bg-amber-50/30 text-center group"
                                                 >
                                                     <div className="w-12 h-12 bg-amber-50 group-hover:bg-terracotta/10 text-amber-600 group-hover:text-terracotta rounded-full flex items-center justify-center mb-2 transition-colors">
-                                                        <span className="text-xl">📷</span>
+                                                        <UploadCloud className="w-6 h-6" />
                                                     </div>
                                                     <p className="text-xs font-bold text-slate-800">
                                                         Klik untuk Unggah Gambar QRIS Toko
@@ -678,7 +691,7 @@ export default function BukaTokoPage() {
                                 {/* Input 2 & 3: Rekening Bank */}
                                 <div className="space-y-4 p-4 bg-slate-50 border border-slate-200 rounded-2xl">
                                     <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                                        <span>🏦</span>
+                                        <Building2 className="w-4 h-4 text-terracotta" />
                                         <span>2 & 3. Detail Rekening Bank</span>
                                         <span className="text-[10px] text-slate-400 font-normal lowercase">(opsional jika sudah mengunggah QRIS)</span>
                                     </label>
@@ -738,10 +751,7 @@ export default function BukaTokoPage() {
                                         <span>Memproses Pendaftaran Toko...</span>
                                     </>
                                 ) : (
-                                    <>
-                                        <span>Daftarkan Toko Sekarang</span>
-                                        <span>🚀</span>
-                                    </>
+                                    <span>Daftarkan Toko Sekarang</span>
                                 )}
                             </button>
                         </div>
