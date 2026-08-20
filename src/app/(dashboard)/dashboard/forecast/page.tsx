@@ -271,11 +271,48 @@ export default function SalesForecastPage() {
           </button>
         </div>
 
-        <div className="text-xs sm:text-sm text-indigo-100 leading-relaxed font-medium relative z-10">
+        <div className="text-xs sm:text-sm text-indigo-100 leading-relaxed font-medium relative z-10 space-y-3">
           <MarkdownRenderer 
             content={data?.ai_qualitative_note || data?.auto_insight || 'Proyeksi omzet periode ini siap meningkat. Pantau ketersediaan stok produk unggulan Anda.'} 
             className="text-indigo-100"
           />
+
+          {/* Event Daerah Terdeteksi di Periode Forecast */}
+          {data?.forecast_data && (
+            (() => {
+              const detectedEvents = new Map<string, { event: NonNullable<ForecastPoint['associated_event']>; dates: string[] }>();
+              for (const p of data.forecast_data) {
+                if (p.associated_event) {
+                  const ev = p.associated_event;
+                  if (!detectedEvents.has(ev.id)) {
+                    detectedEvents.set(ev.id, { event: ev, dates: [p.date] });
+                  } else {
+                    detectedEvents.get(ev.id)!.dates.push(p.date);
+                  }
+                }
+              }
+              const eventsList = Array.from(detectedEvents.values());
+              if (eventsList.length === 0) return null;
+
+              return (
+                <div className="pt-2 flex items-center gap-2 flex-wrap">
+                  {eventsList.map(({ event, dates }) => (
+                    <button
+                      key={event.id}
+                      onClick={() => setSelectedEvent(event)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 transition-all cursor-pointer shadow-sm"
+                      title="Klik untuk melihat detail event daerah"
+                    >
+                      <Calendar className="w-3.5 h-3.5 text-amber-400" />
+                      <span>
+                        🎪 {event.title} ({dates.length === 1 ? dates[0].slice(5) : `${dates[0].slice(5)} s/d ${dates[dates.length - 1].slice(5)}`})
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              );
+            })()
+          )}
         </div>
 
         {/* Action Bar */}

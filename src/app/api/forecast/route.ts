@@ -292,6 +292,17 @@ export async function GET(request: Request) {
   }
 }
 
+const INDO_MONTHS_NAMES = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+
+function formatIndoDateRange(startDateStr: string, endDateStr: string): string {
+  const s = new Date(startDateStr);
+  const e = new Date(endDateStr);
+  if (s.getMonth() === e.getMonth() && s.getFullYear() === e.getFullYear()) {
+    return `${s.getDate()}–${e.getDate()} ${INDO_MONTHS_NAMES[e.getMonth()]} ${e.getFullYear()}`;
+  }
+  return `${s.getDate()} ${INDO_MONTHS_NAMES[s.getMonth()]} – ${e.getDate()} ${INDO_MONTHS_NAMES[e.getMonth()]} ${e.getFullYear()}`;
+}
+
 /**
  * Panggilan ke Google Gemini API untuk analisis naratif kualitatif strategis
  */
@@ -306,14 +317,29 @@ async function generateAiStrategicNarrative(
   const apiKey = process.env.GEMINI_API_KEY;
   const formattedRevenue = new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(totalProjected);
 
+  // Format detail event daerah dengan tanggal spesifik
+  const eventsFormattedList = events.map((e) => {
+    const dateRange = formatIndoDateRange(e.start_date, e.end_date);
+    const loc = e.city_name ? `${e.city_name}, ${e.province_name}` : e.province_name;
+    const impactText = e.expected_tourist_impact === 'massive' ? '+75% (Sangat Masif)' : e.expected_tourist_impact === 'high' ? '+45% (Tinggi)' : '+25% (Sedang)';
+    return `• Nama Event: "${e.title}" | Tanggal: ${dateRange} | Lokasi: ${loc} | Potensi Lonjakan Wisatawan: ${impactText}`;
+  }).join('\n');
+
+  let fallbackEventNote = '';
+  if (events.length > 0) {
+    const firstEv = events[0];
+    const dateRange = formatIndoDateRange(firstEv.start_date, firstEv.end_date);
+    const loc = firstEv.city_name ? `${firstEv.city_name}, ${firstEv.province_name}` : firstEv.province_name;
+    fallbackEventNote = ` Terdapat event "${firstEv.title}" pada tanggal ${dateRange} di ${loc}. Segera siapkan stok produk unggulan & oleh-oleh untuk menyambut lonjakan wisatawan!`;
+  }
+
   if (!apiKey) {
-    const eventNote = events.length > 0 ? `Siapkan stok tambahan menjelang ${events[0].title}.` : '';
-    return `Omzet diprediksi mencapai ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}% vs periode lalu). Hari ramai diperkirakan pada (${busySummary.days_label}), sementara hari sepi pada (${quietSummary.days_label}). Kurangi belanja stok bahan segar pada hari sepi untuk efisiensi modal, dan perbanyak stok siap jual saat hari ramai. ${eventNote}`;
+    return `Omzet diprediksi mencapai ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}% vs periode lalu). Hari ramai diperkirakan pada (${busySummary.days_label}), sementara hari sepi pada (${quietSummary.days_label}). Kurangi belanja stok bahan segar pada hari sepi untuk efisiensi modal, dan perbanyak stok siap jual saat hari ramai.${fallbackEventNote}`;
   }
 
   try {
     const ai = new GoogleGenAI({ apiKey });
-    const candidateModels = ['gemini-3.5-flash', 'gemini-3.7-flash', 'gemini-flash-latest'];
+    const candidateModels = ['gemini-3.6-flash', 'gemini-3.7-flash', 'gemini-2.5-flash', 'gemini-flash-latest'];
 
     const promptText = `
 Anda adalah Asisten Bisnis AI Khusus UMKM (Batik, Kuliner, Oleh-oleh, Kerajinan) di Daerah Istimewa Yogyakarta & Jawa Tengah.
@@ -322,15 +348,20 @@ Berikut data ringkasan proyeksi toko:
 - Total Proyeksi Omzet: ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}% vs periode lalu)
 - Hari Diprediksi Ramai (${busySummary.count} hari): ${busySummary.days_label}
 - Hari Diprediksi Sepi (${quietSummary.count} hari): ${quietSummary.days_label}
-- Event Budaya/Wisata Daerah DIY-Jateng: ${events.map(e => `${e.title} (${e.province_name} - dampak: ${e.expected_tourist_impact})`).join(', ') || 'Tidak ada event khusus'}
+- Event Kebudayaan/Pariwisata Daerah DIY-Jateng:
+${eventsFormattedList || 'Tidak ada event khusus dalam periode ini'}
 - Status Data: ${isFallback ? 'Histori awal (Cold Start)' : 'Histori matang (Holt-Winters)'}
 
-Tugas:
-Buat 1 paragraf ringkas (3-4 kalimat) bergaya lugas & solutif seperti asisten bisnis profesional:
-1. Sebutkan perkiraan tren omzet dan hari puncak vs hari sepi.
-2. Berikan instruksi konkret terkait persiapan stok produk unggulan & belanja bahan baku (kapan harus tambah stok, kapan harus menekan belanja bahan segar agar tidak mubazir).
-3. Jika ada event kebudayaan daerah terdekat, ingatkan untuk memanfaatkan momentum lonjakan wisatawan.
-Hindari jargon teknis seperti 'Holt-Winters' atau 'MAPE'. Gunakan bahasa Indonesia yang ramah, praktis, dan langsung dapat dieksekusi oleh pedagang.
+Instruksi Penting:
+Buat 1 paragraf ringkas (3-4 kalimat) bergaya lugas, ramah, dan solutif:
+1. Sebutkan perkiraan omzet serta hari puncak dan hari sepi.
+2. Berikan instruksi konkret terkait alokasi modal dan persiapan stok bahan baku.
+3. JIKA ADA EVENT DAERAH TERDAFTAR DI ATAS, ANDA WAJIB MENYEBUTKAN SECARA SPESIFIK:
+   - NAMA LENGKAP EVENT
+   - RENTANG TANGGAL PELAKSANAANNYA (contoh: "pada tanggal 20–23 Agustus 2026")
+   - LOKASI DAERAHNYA (Kota/Kabupaten & Provinsi)
+   - Serta instruksi menambah persediaan produk oleh-oleh khas/unggulan untuk menyambut kunjungan wisatawan.
+Hindari jargon teknis seperti 'Holt-Winters' atau 'MAPE'.
 `;
 
     for (const model of candidateModels) {
@@ -346,9 +377,9 @@ Hindari jargon teknis seperti 'Holt-Winters' atau 'MAPE'. Gunakan bahasa Indones
       }
     }
 
-    return `Omzet diprediksi mencapai ${formattedRevenue} dengan pertumbuhan ${growth}%. Tambah stok produk unggulan saat hari ramai (${busySummary.days_label}) dan tekan belanja bahan segar pada hari sepi (${quietSummary.days_label}).`;
+    return `Omzet diprediksi mencapai ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}%). Tambah stok produk unggulan saat hari ramai (${busySummary.days_label}) dan tekan belanja bahan segar pada hari sepi (${quietSummary.days_label}).${fallbackEventNote}`;
   } catch (err) {
     console.warn('Gemini API call fallback:', err);
-    return `Omzet diprediksi mencapai ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}%). Tambah stok produk unggulan saat hari ramai (${busySummary.days_label}) dan tekan belanja bahan baku segar pada hari sepi (${quietSummary.days_label}) untuk efisiensi modal kas.`;
+    return `Omzet diprediksi mencapai ${formattedRevenue} (${growth >= 0 ? '+' : ''}${growth}%). Tambah stok produk unggulan saat hari ramai (${busySummary.days_label}) dan tekan belanja bahan baku segar pada hari sepi (${quietSummary.days_label}) untuk efisiensi modal kas.${fallbackEventNote}`;
   }
 }

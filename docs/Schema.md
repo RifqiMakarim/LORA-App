@@ -216,6 +216,24 @@ CREATE TABLE IF NOT EXISTS public.notifications (
   is_read BOOLEAN DEFAULT false,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+-- 14. Tabel vouchers (Manajemen Kupon Diskon & Promosi Segmen RFM)
+CREATE TABLE IF NOT EXISTS public.vouchers (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  business_id UUID REFERENCES public.businesses(id) ON DELETE CASCADE NOT NULL,
+  code TEXT NOT NULL,
+  discount_type TEXT NOT NULL CHECK (discount_type IN ('percent', 'fixed')),
+  discount_value NUMERIC NOT NULL,
+  target_segment TEXT,
+  min_order_amount NUMERIC DEFAULT 0,
+  usage_limit INTEGER DEFAULT 100,
+  times_used INTEGER DEFAULT 0,
+  is_active BOOLEAN DEFAULT true,
+  starts_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  expires_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+  CONSTRAINT unique_business_voucher_code UNIQUE (business_id, code)
+);
 ```
 
 ---
@@ -237,6 +255,7 @@ ALTER TABLE public.ai_messages ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.storefront_analytics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.local_events ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.vouchers ENABLE ROW LEVEL SECURITY;
 
 -- 1. Profiles Policy: User dapat membaca & mengedit profil miliknya sendiri
 CREATE POLICY "Profiles self access" ON public.profiles
@@ -261,7 +280,14 @@ CREATE POLICY "Customer and Owner orders access" ON public.orders
     business_id IN (SELECT id FROM public.businesses WHERE owner_id = auth.uid())
   );
 
--- 5. Local Events Policy: Semua pengguna (Public/Guest) dapat READ katalog event, Admin dapat CRUD (Input/Edit/Delete)
+-- 5. Vouchers Policy: Publik dapat READ untuk validasi checkout, Owner toko dapat CRUD
+CREATE POLICY "Public vouchers read" ON public.vouchers
+  FOR SELECT USING (true);
+
+CREATE POLICY "Owner vouchers manage" ON public.vouchers
+  FOR ALL USING (business_id IN (SELECT id FROM public.businesses WHERE owner_id = auth.uid()));
+
+-- 6. Local Events Policy: Semua pengguna (Public/Guest) dapat READ katalog event, Admin dapat CRUD (Input/Edit/Delete)
 CREATE POLICY "Public local events read" ON public.local_events
   FOR SELECT USING (true);
 

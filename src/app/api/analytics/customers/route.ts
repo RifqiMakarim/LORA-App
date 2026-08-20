@@ -24,7 +24,7 @@ export async function GET(request: Request) {
       return NextResponse.json(getDemoRFMSummary());
     }
 
-    // 2. Fetch transaksi dengan customer terdaftar (customer_id NOT NULL)
+    // 2. Fetch transaksi dengan customer terdaftar (customer_id NOT NULL) beserta order_items
     const { data: ordersData, error: ordersError } = await supabase
       .from('orders')
       .select(`
@@ -39,6 +39,16 @@ export async function GET(request: Request) {
           full_name,
           phone_number,
           avatar_url
+        ),
+        order_items (
+          id,
+          quantity,
+          price_per_item,
+          products:product_id (
+            id,
+            name,
+            image_url
+          )
         )
       `)
       .eq('business_id', business.id)
@@ -72,12 +82,23 @@ export async function GET(request: Request) {
       }
 
       const existing = customerMap.get(order.customer_id)!;
+      
+      // Parse items
+      const items = (order.order_items || []).map((item: any) => ({
+        id: item.id,
+        product_name: item.products?.name || 'Produk UMKM',
+        quantity: item.quantity || 1,
+        price_per_item: Number(item.price_per_item || 0),
+        image_url: item.products?.image_url || null,
+      }));
+
       existing.orders.push({
         id: order.id,
         total_amount: Number(order.total_amount || 0),
         created_at: order.created_at,
         order_status: order.order_status || 'completed',
         payment_status: order.payment_status || 'paid',
+        items,
       });
     });
 
@@ -103,10 +124,47 @@ function getDemoRFMSummary() {
       phone_number: '6281234567890',
       avatar_url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=250',
       orders: [
-        { id: 'o-1', total_amount: 450000, created_at: new Date(Date.now() - 2 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' },
-        { id: 'o-2', total_amount: 320000, created_at: new Date(Date.now() - 15 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' },
-        { id: 'o-3', total_amount: 550000, created_at: new Date(Date.now() - 28 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' },
-        { id: 'o-4', total_amount: 600000, created_at: new Date(Date.now() - 40 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' }
+        { 
+          id: 'o-1', 
+          total_amount: 450000, 
+          created_at: new Date(Date.now() - 2 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-1', product_name: 'Kain Batik Tulis Sogan Premium', quantity: 1, price_per_item: 350000 },
+            { id: 'i-2', product_name: 'Masker Batik Katun Primis', quantity: 2, price_per_item: 50000 }
+          ]
+        },
+        { 
+          id: 'o-2', 
+          total_amount: 320000, 
+          created_at: new Date(Date.now() - 15 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-3', product_name: 'Kemeja Pria Batik Parang Garudo', quantity: 1, price_per_item: 320000 }
+          ]
+        },
+        { 
+          id: 'o-3', 
+          total_amount: 550000, 
+          created_at: new Date(Date.now() - 28 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-4', product_name: 'Blus Wanita Batik Cap Madura', quantity: 2, price_per_item: 275000 }
+          ]
+        },
+        { 
+          id: 'o-4', 
+          total_amount: 600000, 
+          created_at: new Date(Date.now() - 40 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-5', product_name: 'Kain Jarik Pengantin Tradisional', quantity: 2, price_per_item: 300000 }
+          ]
+        }
       ]
     },
     {
@@ -115,9 +173,36 @@ function getDemoRFMSummary() {
       phone_number: '6281987654321',
       avatar_url: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=250',
       orders: [
-        { id: 'o-5', total_amount: 280000, created_at: new Date(Date.now() - 5 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' },
-        { id: 'o-6', total_amount: 310000, created_at: new Date(Date.now() - 20 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' },
-        { id: 'o-7', total_amount: 250000, created_at: new Date(Date.now() - 45 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' }
+        { 
+          id: 'o-5', 
+          total_amount: 280000, 
+          created_at: new Date(Date.now() - 5 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-6', product_name: 'Outer Batik Cap Motif Kawung', quantity: 1, price_per_item: 280000 }
+          ]
+        },
+        { 
+          id: 'o-6', 
+          total_amount: 310000, 
+          created_at: new Date(Date.now() - 20 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-7', product_name: 'Rok Lilit Batik Jumputan Asli Solo', quantity: 1, price_per_item: 310000 }
+          ]
+        },
+        { 
+          id: 'o-7', 
+          total_amount: 250000, 
+          created_at: new Date(Date.now() - 45 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-8', product_name: 'Syal Sutra Batik Pekalongan', quantity: 1, price_per_item: 250000 }
+          ]
+        }
       ]
     },
     {
@@ -126,7 +211,16 @@ function getDemoRFMSummary() {
       phone_number: '6285711223344',
       avatar_url: null,
       orders: [
-        { id: 'o-8', total_amount: 150000, created_at: new Date(Date.now() - 3 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' }
+        { 
+          id: 'o-8', 
+          total_amount: 150000, 
+          created_at: new Date(Date.now() - 3 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-9', product_name: 'Dompet Pria Kulit Kombinasi Batik', quantity: 1, price_per_item: 150000 }
+          ]
+        }
       ]
     },
     {
@@ -135,8 +229,26 @@ function getDemoRFMSummary() {
       phone_number: '6281399887766',
       avatar_url: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=250',
       orders: [
-        { id: 'o-9', total_amount: 520000, created_at: new Date(Date.now() - 60 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' },
-        { id: 'o-10', total_amount: 480000, created_at: new Date(Date.now() - 75 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' }
+        { 
+          id: 'o-9', 
+          total_amount: 520000, 
+          created_at: new Date(Date.now() - 60 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-10', product_name: 'Set Gamis Batik Lurik Modern', quantity: 1, price_per_item: 520000 }
+          ]
+        },
+        { 
+          id: 'o-10', 
+          total_amount: 480000, 
+          created_at: new Date(Date.now() - 75 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-11', product_name: 'Tas Jinjing Etnik Anyaman Pandan', quantity: 2, price_per_item: 240000 }
+          ]
+        }
       ]
     },
     {
@@ -145,7 +257,16 @@ function getDemoRFMSummary() {
       phone_number: '6287855443322',
       avatar_url: null,
       orders: [
-        { id: 'o-11', total_amount: 85000, created_at: new Date(Date.now() - 90 * 86400000).toISOString(), order_status: 'completed', payment_status: 'paid' }
+        { 
+          id: 'o-11', 
+          total_amount: 85000, 
+          created_at: new Date(Date.now() - 90 * 86400000).toISOString(), 
+          order_status: 'completed', 
+          payment_status: 'paid',
+          items: [
+            { id: 'i-12', product_name: 'Pouch Souvenir Batik Tulis Khas Jogja', quantity: 1, price_per_item: 85000 }
+          ]
+        }
       ]
     }
   ];

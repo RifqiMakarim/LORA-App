@@ -20,4 +20,7 @@ All AI Coding Agents (Antigravity, Claude, Cursor, Copilot) MUST read and adhere
 - [Rules.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Rules.md) - Mandatory Engineering Rules & Best Practices for AI Agents.
 - [Schema.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Schema.md) - Database Schema DDL, ERD Diagram, Row Level Security (RLS), & DIY-Jateng Seed Data.
 - [Forecasting.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Forecasting.md) - Technical Mathematics, Parameters, Event Overlays, & Specifications for Predictive AI.
+- [CustomerSegmentation.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/CustomerSegmentation.md) - RFM Segmentation Engine, CLV Mathematics, CRM Direct Tools & AI Context.
+- [InventoryROP.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/InventoryROP.md) - Technical Specification for Seller Inventory Control, Reorder Point (ROP), Safety Stock & Overstock Classification.
+- [BHS.md](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/BHS.md) - Technical Mathematics, 6 Core Pillars, Scoring Formulations & AI Narrative for Business Health Score.
 

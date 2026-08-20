@@ -5,18 +5,29 @@ export type RFMSegment =
   | 'At Risk'
   | 'Hibernating';
 
+export interface CustomerOrderItemData {
+  id: string;
+  product_name: string;
+  quantity: number;
+  price_per_item: number;
+  image_url?: string | null;
+}
+
+export interface CustomerOrderRecord {
+  id: string;
+  total_amount: number;
+  created_at: string;
+  order_status: string;
+  payment_status: string;
+  items?: CustomerOrderItemData[];
+}
+
 export interface CustomerOrderData {
   customer_id: string;
   full_name: string;
   phone_number?: string | null;
   avatar_url?: string | null;
-  orders: {
-    id: string;
-    total_amount: number;
-    created_at: string;
-    order_status: string;
-    payment_status: string;
-  }[];
+  orders: CustomerOrderRecord[];
 }
 
 export interface CustomerRFMProfile {
@@ -35,6 +46,8 @@ export interface CustomerRFMProfile {
   last_order_date: string;
   recommended_action: string;
   suggested_wa_template: string;
+  order_history: CustomerOrderRecord[];
+  scoring_method: 'quintile' | 'absolute_threshold';
 }
 
 export interface RFMAnalyticsSummary {
@@ -44,10 +57,38 @@ export interface RFMAnalyticsSummary {
   estimated_clv: number;        // CLV dalam IDR
   segment_distribution: Record<RFMSegment, number>;
   customers: CustomerRFMProfile[];
+  scoring_method: 'quintile' | 'absolute_threshold';
 }
 
 /**
- * Menghitung skor kuantil (1-5) untuk sebuah array nilai numerik.
+ * Skor Ambang Batas Absolut (Absolute Thresholds) untuk Toko Baru / Sampel Kecil (N < 5)
+ */
+export function calculateAbsoluteRecencyScore(recencyDays: number): number {
+  if (recencyDays <= 7) return 5;
+  if (recencyDays <= 14) return 4;
+  if (recencyDays <= 30) return 3;
+  if (recencyDays <= 60) return 2;
+  return 1;
+}
+
+export function calculateAbsoluteFrequencyScore(count: number): number {
+  if (count >= 5) return 5;
+  if (count >= 3) return 4;
+  if (count === 2) return 3;
+  if (count === 1) return 2;
+  return 1;
+}
+
+export function calculateAbsoluteMonetaryScore(spent: number): number {
+  if (spent >= 1000000) return 5;
+  if (spent >= 500000) return 4;
+  if (spent >= 250000) return 3;
+  if (spent >= 100000) return 2;
+  return 1;
+}
+
+/**
+ * Menghitung skor kuantil (1-5) untuk sebuah array nilai numerik (N >= 5).
  */
 function calculateQuintileScores(values: number[], isAscendingBetter = true): number[] {
   if (values.length === 0) return [];
@@ -139,6 +180,9 @@ export function getSegmentActionDetails(segment: RFMSegment, customerName: strin
 
 /**
  * Engine utama perhitungan RFM Segmentation & Customer Analytics.
+ * Mendukung Hybrid Scoring:
+ * - Jika N < 5 pelanggan: Menggunakan Ambang Batas Absolut (Absolute Thresholds)
+ * - Jika N >= 5 pelanggan: Menggunakan Kuantil Persentil Dinamis (Dynamic Quintiles)
  */
 export function calculateRFMSegmentation(
   rawData: CustomerOrderData[],
@@ -160,8 +204,12 @@ export function calculateRFMSegmentation(
         'Hibernating': 0,
       },
       customers: [],
+      scoring_method: 'absolute_threshold',
     };
   }
+
+  const isSmallDataset = filteredCustomers.length < 5;
+  const scoringMethod: 'quintile' | 'absolute_threshold' = isSmallDataset ? 'absolute_threshold' : 'quintile';
 
   // 1. Ekstrak nilai mentah R, F, M per pelanggan
   const parsedMetrics = filteredCustomers.map(c => {
@@ -189,18 +237,30 @@ export function calculateRFMSegmentation(
       frequencyCount: orderCount,
       monetaryTotal: totalSpent,
       latestOrderDateStr: latestOrderDate.toISOString(),
+      orderHistory: c.orders,
     };
   });
 
-  // 2. Hitung Skor Quintile (1 - 5)
-  const recencies = parsedMetrics.map(m => m.recencyDays);
-  const frequencies = parsedMetrics.map(m => m.frequencyCount);
-  const monetaries = parsedMetrics.map(m => m.monetaryTotal);
+  // 2. Hitung Skor R, F, M (Hybrid Quintile vs Absolute Threshold)
+  let rScores: number[];
+  let fScores: number[];
+  let mScores: number[];
 
-  // Recency: hari lebih kecil = lebih baik => isAscendingBetter = false
-  const rScores = calculateQuintileScores(recencies, false);
-  const fScores = calculateQuintileScores(frequencies, true);
-  const mScores = calculateQuintileScores(monetaries, true);
+  if (isSmallDataset) {
+    // Gunakan batasan absolut jika data pembeli < 5
+    rScores = parsedMetrics.map(m => calculateAbsoluteRecencyScore(m.recencyDays));
+    fScores = parsedMetrics.map(m => calculateAbsoluteFrequencyScore(m.frequencyCount));
+    mScores = parsedMetrics.map(m => calculateAbsoluteMonetaryScore(m.monetaryTotal));
+  } else {
+    // Gunakan ranking kuantil jika data pembeli >= 5
+    const recencies = parsedMetrics.map(m => m.recencyDays);
+    const frequencies = parsedMetrics.map(m => m.frequencyCount);
+    const monetaries = parsedMetrics.map(m => m.monetaryTotal);
+
+    rScores = calculateQuintileScores(recencies, false);
+    fScores = calculateQuintileScores(frequencies, true);
+    mScores = calculateQuintileScores(monetaries, true);
+  }
 
   // 3. Gabungkan hasil ke CustomerRFMProfile
   const segmentCounts: Record<RFMSegment, number> = {
@@ -247,6 +307,8 @@ export function calculateRFMSegmentation(
       last_order_date: item.latestOrderDateStr,
       recommended_action: action,
       suggested_wa_template: waTemplate,
+      order_history: item.orderHistory,
+      scoring_method: scoringMethod,
     };
   });
 
@@ -254,7 +316,7 @@ export function calculateRFMSegmentation(
   const repeatRate = Number(((repeatCustomerCount / totalCustomers) * 100).toFixed(1));
   const avgOrderValue = totalOrderCountAll > 0 ? Math.round(totalRevenue / totalOrderCountAll) : 0;
   const avgCustomerSpend = totalCustomers > 0 ? Math.round(totalRevenue / totalCustomers) : 0;
-  // Perkiraan Customer Lifetime Value sederhaha (Average Spend x Repeat Factor)
+  // Perkiraan Customer Lifetime Value (Average Spend x Repeat Factor)
   const estimatedClv = Math.round(avgCustomerSpend * (1 + (repeatRate / 100)));
 
   return {
@@ -264,5 +326,6 @@ export function calculateRFMSegmentation(
     estimated_clv: estimatedClv,
     segment_distribution: segmentCounts,
     customers,
+    scoring_method: scoringMethod,
   };
 }

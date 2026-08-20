@@ -90,7 +90,7 @@ export default function FloatingChatWidget() {
 
       {/* Slide-over Drawer Window */}
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 w-96 max-w-[90vw] h-[520px] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+        <div className="fixed bottom-24 right-6 z-50 w-96 max-w-[90vw] h-[560px] max-h-[80vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 flex flex-col overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
           {/* Header */}
           <div className="p-4 bg-slate-900 text-white flex items-center justify-between border-b border-slate-800">
             <div className="flex items-center gap-2">
@@ -102,7 +102,7 @@ export default function FloatingChatWidget() {
             </div>
             <div className="flex items-center gap-1">
               <Link 
-                href="/ai-consultant" 
+                href="/dashboard/ai-consultant" 
                 className="p-1 text-slate-300 hover:text-white rounded-lg hover:bg-white/10"
                 title="Buka Halaman Penuh"
               >

@@ -26,6 +26,53 @@ interface LocalEvent {
   expected_tourist_impact: 'low' | 'medium' | 'high' | 'massive';
 }
 
+const REGIONAL_CITIES: Record<string, string[]> = {
+  'DI Yogyakarta': [
+    'Kabupaten Bantul',
+    'Kabupaten Gunungkidul',
+    'Kabupaten Kulon Progo',
+    'Kabupaten Sleman',
+    'Kota Yogyakarta'
+  ],
+  'Jawa Tengah': [
+    'Kabupaten Banjarnegara',
+    'Kabupaten Banyumas',
+    'Kabupaten Batang',
+    'Kabupaten Blora',
+    'Kabupaten Boyolali',
+    'Kabupaten Brebes',
+    'Kabupaten Cilacap',
+    'Kabupaten Demak',
+    'Kabupaten Grobogan',
+    'Kabupaten Jepara',
+    'Kabupaten Karanganyar',
+    'Kabupaten Kebumen',
+    'Kabupaten Kendal',
+    'Kabupaten Klaten',
+    'Kabupaten Kudus',
+    'Kabupaten Magelang',
+    'Kabupaten Pati',
+    'Kabupaten Pekalongan',
+    'Kabupaten Pemalang',
+    'Kabupaten Purbalingga',
+    'Kabupaten Purworejo',
+    'Kabupaten Rembang',
+    'Kabupaten Semarang',
+    'Kabupaten Sragen',
+    'Kabupaten Sukoharjo',
+    'Kabupaten Tegal',
+    'Kabupaten Temanggung',
+    'Kabupaten Wonogiri',
+    'Kabupaten Wonosobo',
+    'Kota Magelang',
+    'Kota Pekalongan',
+    'Kota Salatiga',
+    'Kota Semarang',
+    'Kota Surakarta',
+    'Kota Tegal'
+  ]
+};
+
 interface AdminEventsClientProps {
   events: LocalEvent[];
 }
@@ -215,8 +262,11 @@ export default function AdminEventsClient({ events }: AdminEventsClientProps) {
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Provinsi</label>
                 <select
                   value={formProvince}
-                  onChange={(e) => setFormProvince(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-hidden"
+                  onChange={(e) => {
+                    setFormProvince(e.target.value);
+                    setFormCity(''); // Reset selected city
+                  }}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-hidden cursor-pointer"
                 >
                   <option value="DI Yogyakarta">DI Yogyakarta</option>
                   <option value="Jawa Tengah">Jawa Tengah</option>
@@ -224,13 +274,18 @@ export default function AdminEventsClient({ events }: AdminEventsClientProps) {
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Kabupaten/Kota</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Banjarnegara"
+                <select
                   value={formCity}
                   onChange={(e) => setFormCity(e.target.value)}
-                  className="w-full px-3 py-2 border border-slate-200 focus:border-slate-350 rounded-xl text-xs font-semibold focus:outline-hidden focus:ring-1 focus:ring-slate-300"
-                />
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-bold focus:outline-hidden cursor-pointer"
+                >
+                  <option value="">Pilih Kabupaten/Kota</option>
+                  {(REGIONAL_CITIES[formProvince] || []).map((city) => (
+                    <option key={city} value={city}>
+                      {city}
+                    </option>
+                  ))}
+                </select>
               </div>
             </div>
 
