@@ -3,6 +3,7 @@ import { PackageX, RotateCcw } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import ProductCard from '@/components/storefront/ProductCard';
 import KatalogFilter from '@/components/storefront/KatalogFilter';
+import KatalogBannerSlider from '@/components/storefront/KatalogBannerSlider';
 
 interface BusinessRel {
     name: string;
@@ -39,19 +40,36 @@ interface KatalogPageProps {
 
 /**
  * Server Component Katalog Utama Storefront LORA (/katalog)
- * Membaca searchParams URL, melakukan pencarian & filter kategori secara dinamis dari Supabase
+ * Membaca searchParams URL, melakukan pencarian, filter kategori, serta filter Kota Dinamis dari database
  */
 export default async function KatalogPage({ searchParams }: KatalogPageProps) {
     const resolvedSearchParams = searchParams ? await searchParams : {};
     const searchRaw = (resolvedSearchParams.q as string) || (resolvedSearchParams.search as string) || '';
     const categoryRaw = (resolvedSearchParams.category as string) || '';
+    const cityName = ((resolvedSearchParams.city_name as string) || (resolvedSearchParams.city as string) || '').trim();
+    const regionRaw = (resolvedSearchParams.region as string) || '';
 
     const searchTerm = searchRaw.trim();
     const categoryTerm = categoryRaw.trim();
+    const regionTerm = regionRaw.trim();
 
     const supabase = await createClient();
 
-    // Inisialisasi Dynamic Query Supabase
+    // 1. Ambil Data Kota secara Unik (Distinct) dari Tabel `businesses`
+    const { data: rawCities } = await supabase
+        .from('businesses')
+        .select('city_name')
+        .not('city_name', 'is', null);
+
+    const availableCities: string[] = Array.from(
+        new Set(
+            (rawCities || [])
+                .map(b => b.city_name?.trim())
+                .filter((city): city is string => Boolean(city && city.length > 0))
+        )
+    ).sort();
+
+    // 2. Inisialisasi Dynamic Query Supabase Produk
     let query = supabase
         .from('products')
         .select('*, businesses(name, slug, city_name, province_name)')
@@ -67,9 +85,9 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
         query = query.eq('category', categoryTerm);
     }
 
-    // Eksekusi Query
+    // Eksekusi Query Supabase
     const { data: rawProducts, error } = await query.order('created_at', { ascending: false });
-    const products: ProductWithBusiness[] = rawProducts || [];
+    const fetchedProducts: ProductWithBusiness[] = rawProducts || [];
 
     // Helper mengekstrak data relasi bisnis tunggal
     const getBusiness = (b: BusinessRel | BusinessRel[] | null): BusinessRel | null => {
@@ -78,31 +96,51 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
         return b;
     };
 
+    // Filter Wilayah Berbasis Kota Dinamis yang dipilih
+    const filteredProducts: ProductWithBusiness[] = fetchedProducts.filter(product => {
+        const bus = getBusiness(product.businesses);
+        if (!bus) return true;
+
+        const locString = `${bus.city_name || ''} ${bus.province_name || ''}`.toLowerCase();
+
+        if (cityName) {
+            return locString.includes(cityName.toLowerCase());
+        }
+
+        if (regionTerm && regionTerm !== 'Semua Wilayah' && regionTerm !== 'Semua') {
+            return locString.includes(regionTerm.toLowerCase());
+        }
+
+        return true;
+    });
+
+    // Logika Sorting Produk: Produk stok > 0 di atas, Stok <= 0 otomatis di paling bawah
+    const products: ProductWithBusiness[] = [...filteredProducts].sort((a, b) => {
+        const aHasStock = (a.stock || 0) > 0;
+        const bHasStock = (b.stock || 0) > 0;
+
+        if (aHasStock && !bHasStock) return -1;
+        if (!aHasStock && bHasStock) return 1;
+        return 0;
+    });
+
+    const activeLocationLabel = cityName || (regionTerm !== 'Semua Wilayah' ? regionTerm : '');
+
     return (
         <div suppressHydrationWarning className="space-y-6 sm:space-y-8">
-            {/* Header Hero Banner Katalog */}
-            <div suppressHydrationWarning className="relative overflow-hidden rounded-2xl sm:rounded-3xl bg-gradient-to-r from-slate-900 via-slate-800 to-amber-950 text-white p-5 sm:p-10 shadow-xl">
-                <div suppressHydrationWarning className="relative z-10 max-w-xl space-y-3 sm:space-y-4">
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-500/20 border border-amber-400/40 text-amber-300 rounded-full text-[11px] sm:text-xs font-semibold uppercase tracking-wider">
-                        ✨ Regional UMKM Storefront
-                    </span>
-                    <h1 className="text-2xl sm:text-4xl font-outfit font-extrabold tracking-tight leading-tight">
-                        Katalog Produk LORA
-                    </h1>
-                    <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                        Jelajahi produk batik tulis, oleh-oleh kuliner khas, dan kerajinan seni dari pengrajin lokal Daerah Istimewa Yogyakarta & Jawa Tengah.
-                    </p>
-                </div>
-            </div>
+            {/* Header Hero Banner Slider Telkomsel-Style */}
+            <KatalogBannerSlider />
 
-            {/* Client Component: Search Bar & Category Filter Bar */}
-            <KatalogFilter categories={CATEGORIES} />
+            {/* Client Component: Search Bar & Integrated Dynamic Location Filter */}
+            <KatalogFilter categories={CATEGORIES} availableCities={availableCities} />
 
             {/* Product Grid Section Header */}
             <div suppressHydrationWarning className="space-y-4">
                 <div suppressHydrationWarning className="flex items-center justify-between">
                     <h2 className="text-lg sm:text-xl font-outfit font-bold text-slate-900">
-                        {categoryTerm && categoryTerm !== 'Semua Produk'
+                        {activeLocationLabel
+                            ? `Kota: ${activeLocationLabel} ${categoryTerm && categoryTerm !== 'Semua Produk' ? `• Kategori: ${categoryTerm}` : ''}`
+                            : categoryTerm && categoryTerm !== 'Semua Produk'
                             ? `Kategori: ${categoryTerm}`
                             : searchTerm
                             ? `Hasil Pencarian: "${searchTerm}"`
@@ -122,7 +160,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
                         <div className="space-y-1.5 max-w-md mx-auto">
                             <h3 className="text-base font-bold text-slate-900">Produk Tidak Ditemukan</h3>
                             <p className="text-xs text-slate-500 leading-relaxed font-medium">
-                                Produk tidak ditemukan. Coba gunakan kata kunci atau kategori lain.
+                                Produk tidak ditemukan untuk kriteria filter ini. Coba gunakan kata kunci, kategori, atau kota lain.
                             </p>
                         </div>
                         <div className="pt-2">

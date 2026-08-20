@@ -1,8 +1,10 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Eye, EyeOff } from 'lucide-react';
+import toast, { Toaster } from 'react-hot-toast';
 import { signup, loginWithGoogle } from '@/app/(auth)/actions';
 
 function GoogleIcon() {
@@ -39,9 +41,49 @@ function SpinnerIcon() {
 
 export default function RegisterPage() {
     const [state, formAction, isPending] = useActionState(signup, null);
+    const [showPassword, setShowPassword] = useState<boolean>(false);
+
+    // State Controlled Component untuk Mempertahankan Input setelah Error
+    const [fullName, setFullName] = useState<string>('');
+    const [email, setEmail] = useState<string>('');
+    const [phone, setPhone] = useState<string>('');
+    const [password, setPassword] = useState<string>('');
+
+    // Ref untuk Auto-Focus elemen input spesifik yang bermasalah
+    const emailInputRef = useRef<HTMLInputElement>(null);
+    const phoneInputRef = useRef<HTMLInputElement>(null);
+
+    // Reaktif Notifikasi Toast & Pengosongan Spesifik berdasarkan jenis error
+    useEffect(() => {
+        if (state?.error) {
+            toast.error(state.error, {
+                duration: 4000,
+                position: 'top-center',
+            });
+
+            const errorText = state.error.toLowerCase();
+
+            // 1. Jika error terkait Email yang sudah terdaftar
+            if (errorText.includes('email')) {
+                setEmail('');
+                setTimeout(() => {
+                    emailInputRef.current?.focus();
+                }, 50);
+            }
+            // 2. Jika error terkait Nomor WhatsApp yang sudah terdaftar
+            else if (errorText.includes('whatsapp') || errorText.includes('telepon') || errorText.includes('nomor')) {
+                setPhone('');
+                setTimeout(() => {
+                    phoneInputRef.current?.focus();
+                }, 50);
+            }
+        }
+    }, [state]);
 
     return (
         <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 sm:p-8 font-sans relative overflow-hidden">
+            <Toaster position="top-center" reverseOrder={false} />
+
             {/* Ornamen Dekoratif Latar Belakang (Glassmorphism Vibe) */}
             <div className="absolute top-[-10%] left-[-10%] w-[30rem] h-[30rem] bg-terracotta/20 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-indigo/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -58,7 +100,9 @@ export default function RegisterPage() {
                     {/* Bagian Atas (Branding) */}
                     <div className="relative z-10">
                         <div className="flex items-center gap-2.5 mb-2">
-                            <span className="h-2.5 w-2.5 rounded-full bg-terracotta animate-pulse"></span>
+                            <div className="w-9 h-9 rounded-full bg-white p-0.5 flex items-center justify-center shadow-lg shadow-terracotta/30 border border-slate-100 overflow-hidden flex-shrink-0">
+                                <Image src="/images/loralogo.jpeg" alt="Logo LORA" width={36} height={36} className="w-full h-full object-cover rounded-full" />
+                            </div>
                             <h1 className="text-4xl font-outfit font-bold tracking-tight">LORA</h1>
                         </div>
                         <h2 className="text-2xl font-outfit font-bold mt-2">Selamat Datang di LORA</h2>
@@ -85,64 +129,94 @@ export default function RegisterPage() {
                     <div className="max-w-md mx-auto">
                         <h2 className="text-3xl font-outfit font-bold text-indigo mb-2">Buat Akun</h2>
                         <p className="text-slate-500 text-sm mb-8">
-                            Masukkan detail Anda untuk mulai menggunakan LORA (Otomatis terdaftar sebagai Pembeli).
+                            Masukkan detail Anda untuk mulai menggunakan LORA.
                         </p>
 
                         <form action={formAction} className="space-y-4">
+                            {/* Input Nama Lengkap */}
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider" htmlFor="fullName">
-                                    Nama Lengkap <span className="text-status-danger">*</span>
+                                    NAMA LENGKAP <span className="text-rose-500">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     id="fullName"
                                     name="fullName"
                                     required
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
                                     placeholder="Contoh: Zuyyina Amalia"
-                                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 text-indigo placeholder-slate-400 text-sm transition-all duration-300 hover:border-slate-300 focus:bg-white focus:border-terracotta focus:ring-4 focus:ring-terracotta/15 focus:outline-none"
+                                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 text-sm focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all"
                                 />
                             </div>
 
+                            {/* Input Email */}
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider" htmlFor="email">
-                                    Email <span className="text-status-danger">*</span>
+                                    EMAIL <span className="text-rose-500">*</span>
                                 </label>
                                 <input
+                                    ref={emailInputRef}
                                     type="email"
                                     id="email"
                                     name="email"
                                     required
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
                                     placeholder="anda@email.com"
-                                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 text-indigo placeholder-slate-400 text-sm transition-all duration-300 hover:border-slate-300 focus:bg-white focus:border-terracotta focus:ring-4 focus:ring-terracotta/15 focus:outline-none"
+                                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 text-sm focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all"
                                 />
                             </div>
 
+                            {/* Input Nomor WhatsApp (Wajib / Required) */}
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider" htmlFor="phone">
-                                    Nomor WhatsApp (Opsional)
+                                    NOMOR WHATSAPP <span className="text-rose-500">*</span>
                                 </label>
                                 <input
+                                    ref={phoneInputRef}
                                     type="tel"
                                     id="phone"
                                     name="phone"
+                                    required
+                                    value={phone}
+                                    onChange={(e) => setPhone(e.target.value)}
                                     placeholder="081234567890"
-                                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 text-indigo placeholder-slate-400 text-sm transition-all duration-300 hover:border-slate-300 focus:bg-white focus:border-terracotta focus:ring-4 focus:ring-terracotta/15 focus:outline-none"
+                                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 text-sm focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all"
                                 />
                             </div>
 
+                            {/* Input Kata Sandi + Toggle Eye Icon */}
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider" htmlFor="password">
-                                    Kata Sandi <span className="text-status-danger">*</span>
+                                    KATA SANDI <span className="text-rose-500">*</span>
                                 </label>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    required
-                                    minLength={6}
-                                    placeholder="Minimal 6 karakter"
-                                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 text-indigo placeholder-slate-400 text-sm transition-all duration-300 hover:border-slate-300 focus:bg-white focus:border-terracotta focus:ring-4 focus:ring-terracotta/15 focus:outline-none"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        id="password"
+                                        name="password"
+                                        required
+                                        minLength={6}
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Minimal 6 karakter"
+                                        className="w-full px-4 py-3.5 pr-12 rounded-xl border border-slate-200 bg-white text-slate-900 placeholder-slate-400 text-sm focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500 outline-none transition-all"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(prev => !prev)}
+                                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer p-1"
+                                        tabIndex={-1}
+                                        aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="w-5 h-5" />
+                                        ) : (
+                                            <Eye className="w-5 h-5" />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Pesan Error Dinamis */}
@@ -158,7 +232,7 @@ export default function RegisterPage() {
                             <button
                                 type="submit"
                                 disabled={isPending}
-                                className="w-full bg-terracotta hover:bg-terracotta-hover text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-terracotta/25 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center mt-6"
+                                className="w-full bg-terracotta hover:bg-terracotta-hover text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-terracotta/25 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center mt-6 cursor-pointer"
                             >
                                 {isPending ? (
                                     <>
@@ -171,7 +245,7 @@ export default function RegisterPage() {
                             </button>
                         </form>
 
-                        {/* Garis Pemisah Google OAuth (FR-001) */}
+                        {/* Garis Pemisah Google OAuth */}
                         <div className="relative my-6">
                             <div className="absolute inset-0 flex items-center">
                                 <div className="w-full border-t border-slate-200"></div>
@@ -187,7 +261,7 @@ export default function RegisterPage() {
                         }}>
                             <button
                                 type="submit"
-                                className="w-full bg-white hover:bg-slate-50/80 text-slate-700 font-semibold py-3.5 rounded-xl border border-slate-200 transition-all duration-300 hover:border-slate-300 hover:shadow-sm active:scale-[0.99] flex items-center justify-center gap-3 text-sm"
+                                className="w-full bg-white hover:bg-slate-50 text-slate-700 font-semibold py-3.5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all active:scale-[0.99] flex items-center justify-center gap-3 text-sm cursor-pointer"
                             >
                                 <GoogleIcon />
                                 <span>Lanjutkan dengan Google</span>

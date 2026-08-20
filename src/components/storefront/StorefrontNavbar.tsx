@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
     Search,
@@ -113,8 +114,15 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
             <div suppressHydrationWarning className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 flex items-center justify-between gap-2 sm:gap-4">
                 {/* 1. KIRI: Brand Logo LORA (Mengarah SELALU ke /katalog) */}
                 <Link href="/katalog" className="flex items-center gap-2 group flex-shrink-0">
-                    <div suppressHydrationWarning className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-terracotta to-amber-500 flex items-center justify-center shadow-md shadow-terracotta/20 group-hover:scale-105 transition-transform">
-                        <span className="text-white font-extrabold text-sm sm:text-base tracking-wider font-outfit">L</span>
+                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white p-0.5 flex items-center justify-center shadow-md shadow-terracotta/25 border border-slate-100/80 overflow-hidden group-hover:scale-105 transition-transform flex-shrink-0">
+                        <Image
+                            src="/images/loralogo.jpeg"
+                            alt="Logo LORA"
+                            width={36}
+                            height={36}
+                            className="w-full h-full object-cover rounded-full"
+                            priority
+                        />
                     </div>
                     <div suppressHydrationWarning className="flex flex-col">
                         <span className="text-lg sm:text-xl font-outfit font-black tracking-tight text-slate-900 group-hover:text-terracotta transition-colors leading-none">

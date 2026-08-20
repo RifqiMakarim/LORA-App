@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
     LayoutDashboard,
@@ -155,8 +156,15 @@ export default function DashboardShell({
                 <div className="p-5 border-b border-slate-800 space-y-4">
                     <div className="flex items-center justify-between">
                         <Link href={isAdminRoute ? "/admin" : "/dashboard"} className="flex items-center gap-2.5 group">
-                            <div className={`w-9 h-9 rounded-2xl bg-gradient-to-tr ${isAdminRoute ? 'from-emerald-600 to-teal-400 shadow-emerald-500/20' : 'from-terracotta to-amber-500 shadow-terracotta/20'} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
-                                <span className="text-white font-extrabold text-base tracking-wider font-outfit">L</span>
+                            <div className="w-9 h-9 rounded-full bg-white p-0.5 flex items-center justify-center shadow-lg shadow-terracotta/30 border border-slate-700/60 overflow-hidden group-hover:scale-105 transition-transform flex-shrink-0">
+                                <Image
+                                    src="/images/loralogo.jpeg"
+                                    alt="Logo LORA"
+                                    width={36}
+                                    height={36}
+                                    className="w-full h-full object-cover rounded-full"
+                                    priority
+                                />
                             </div>
                             <div className="flex flex-col">
                                 <span className="text-lg font-outfit font-black tracking-tight text-white leading-none">

@@ -1,98 +1,81 @@
 'use client';
 
-import { useEffect, useRef, useState, ReactNode } from 'react';
+import { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 
 interface FadeContentProps {
     children: ReactNode;
     blur?: boolean;
-    duration?: number; // in milliseconds
+    duration?: number; // in milliseconds or seconds
     delay?: number; // in milliseconds
     direction?: 'up' | 'down' | 'left' | 'right' | 'none';
     distance?: number; // in pixels
     threshold?: number;
     className?: string;
     once?: boolean;
+    scale?: boolean;
+    scaleVal?: number;
 }
 
 export default function FadeContent({
     children,
     blur = false,
-    duration = 1000,
+    duration = 700,
     delay = 0,
     direction = 'up',
-    distance = 28,
-    threshold = 0.1,
+    distance = 30,
+    threshold = 0.15,
     className = '',
     once = true,
+    scale = false,
+    scaleVal = 0.95,
 }: FadeContentProps) {
-    const [isVisible, setIsVisible] = useState<boolean>(false);
-    const elementRef = useRef<HTMLDivElement>(null);
-
-    useEffect(() => {
-        const element = elementRef.current;
-        if (!element) return;
-
-        if (typeof IntersectionObserver === 'undefined') {
-            setIsVisible(true);
-            return;
-        }
-
-        const observer = new IntersectionObserver(
-            (entries) => {
-                entries.forEach((entry) => {
-                    if (entry.isIntersecting) {
-                        setIsVisible(true);
-                        if (once) {
-                            observer.unobserve(entry.target);
-                        }
-                    } else if (!once) {
-                        setIsVisible(false);
-                    }
-                });
-            },
-            { threshold }
-        );
-
-        observer.observe(element);
-
-        return () => {
-            observer.disconnect();
-        };
-    }, [threshold, once]);
-
-    const getTransform = (): string => {
-        if (isVisible) return 'translate3d(0, 0, 0)';
+    const getInitialOffset = () => {
         switch (direction) {
             case 'up':
-                return `translate3d(0, ${distance}px, 0)`;
+                return { y: distance, x: 0 };
             case 'down':
-                return `translate3d(0, -${distance}px, 0)`;
+                return { y: -distance, x: 0 };
             case 'left':
-                return `translate3d(${distance}px, 0, 0)`;
+                return { y: 0, x: distance };
             case 'right':
-                return `translate3d(-${distance}px, 0, 0)`;
+                return { y: 0, x: -distance };
             case 'none':
             default:
-                return 'translate3d(0, 0, 0)';
+                return { y: 0, x: 0 };
         }
     };
 
+    const offset = getInitialOffset();
+
+    const durationSec = duration > 10 ? duration / 1000 : duration;
+    const delaySec = delay > 10 ? delay / 1000 : delay;
+
     return (
-        <div
-            ref={elementRef}
+        <motion.div
             className={className}
-            style={{
-                opacity: isVisible ? 1 : 0,
-                transform: getTransform(),
-                filter: blur ? (isVisible ? 'blur(0px)' : 'blur(10px)') : 'none',
-                transitionProperty: 'opacity, transform, filter',
-                transitionDuration: `${duration}ms`,
-                transitionDelay: `${delay}ms`,
-                transitionTimingFunction: 'cubic-bezier(0.22, 1, 0.36, 1)',
-                willChange: 'opacity, transform',
+            initial={{
+                opacity: 0,
+                x: offset.x,
+                y: offset.y,
+                scale: scale ? scaleVal : 1,
+                filter: blur ? 'blur(8px)' : 'none',
+            }}
+            whileInView={{
+                opacity: 1,
+                x: 0,
+                y: 0,
+                scale: 1,
+                filter: blur ? 'blur(0px)' : 'none',
+            }}
+            viewport={{ once, amount: threshold }}
+            transition={{
+                duration: durationSec,
+                delay: delaySec,
+                ease: [0.22, 1, 0.36, 1],
             }}
         >
             {children}
-        </div>
+        </motion.div>
     );
 }

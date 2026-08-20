@@ -16,6 +16,7 @@ import {
     User,
     Package
 } from 'lucide-react';
+import Image from 'next/image';
 import { logout } from '@/app/(auth)/actions';
 import { useCart } from '@/components/storefront/CartContext';
 
@@ -112,8 +113,15 @@ export default function LandingNavbar({ user, profile }: LandingNavbarProps) {
             <div suppressHydrationWarning className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex items-center justify-between gap-4">
                 {/* 1. KIRI: LOGO LORA */}
                 <Link href="/" className="flex items-center gap-2.5 group flex-shrink-0">
-                    <div suppressHydrationWarning className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-terracotta via-amber-500 to-amber-400 flex items-center justify-center shadow-md shadow-terracotta/25 group-hover:scale-105 transition-all">
-                        <span className="text-white font-black text-base sm:text-lg tracking-wider font-outfit">L</span>
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white p-0.5 flex items-center justify-center shadow-md shadow-terracotta/25 border border-slate-100/80 overflow-hidden group-hover:scale-105 transition-transform flex-shrink-0">
+                        <Image
+                            src="/images/loralogo.jpeg"
+                            alt="Logo LORA"
+                            width={40}
+                            height={40}
+                            className="w-full h-full object-cover rounded-full"
+                            priority
+                        />
                     </div>
                     <div suppressHydrationWarning className="flex flex-col">
                         <span className="text-xl sm:text-2xl font-outfit font-black tracking-tight text-slate-900 group-hover:text-terracotta transition-colors leading-none">

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { Sparkles, MapPin, ArrowUp, Store, ShieldCheck } from 'lucide-react';
 
 export default function LandingFooter() {
@@ -29,8 +30,14 @@ export default function LandingFooter() {
                     {/* Brand Column (5 cols) */}
                     <div className="md:col-span-5 space-y-4">
                         <Link href="/" className="inline-flex items-center gap-2.5 group">
-                            <div className="w-9 h-9 rounded-2xl bg-gradient-to-tr from-terracotta via-amber-500 to-amber-400 flex items-center justify-center text-white font-black text-base shadow-md shadow-terracotta/20 group-hover:scale-105 transition-transform">
-                                <span className="font-outfit">L</span>
+                            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white p-0.5 flex items-center justify-center shadow-lg shadow-terracotta/30 border border-slate-700/50 overflow-hidden group-hover:scale-105 transition-transform flex-shrink-0">
+                                <Image
+                                    src="/images/loralogo.jpeg"
+                                    alt="Logo LORA"
+                                    width={40}
+                                    height={40}
+                                    className="w-full h-full object-cover rounded-full"
+                                />
                             </div>
                             <div>
                                 <span className="text-xl font-outfit font-black text-white tracking-tight group-hover:text-amber-400 transition-colors">LORA</span>

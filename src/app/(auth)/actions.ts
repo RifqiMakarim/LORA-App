@@ -17,32 +17,58 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
     const fullName = formData.get('fullName') as string
     const phone = formData.get('phone') as string
 
-    if (!email || !password || !fullName) {
+    if (!email || !password || !fullName || !phone) {
         return { error: 'Mohon lengkapi semua kolom wajib.' }
     }
 
+    // 1. Cek Duplikasi Nomor WhatsApp di tabel profiles SEBELUM pembuatan akun
+    const { data: existingPhone } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('phone_number', phone)
+        .limit(1)
+        .maybeSingle();
+
+    if (existingPhone) {
+        return { error: 'Nomor WhatsApp sudah terdaftar. Gunakan nomor lain.' };
+    }
+
+    // 2. Pembuatan Akun via Supabase Auth & Cek Duplikasi Email
     const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
     })
 
     if (authError) {
+        const errorMsg = authError.message.toLowerCase();
+        if (
+            errorMsg.includes('already registered') ||
+            errorMsg.includes('already in use') ||
+            errorMsg.includes('user_already_exists') ||
+            authError.status === 422
+        ) {
+            return { error: 'Email ini sudah terdaftar. Silakan masuk.' };
+        }
         return { error: authError.message }
     }
 
-    // Jika sukses, masukkan ke tabel profiles dengan default role pembeli
+    // 3. Jika sukses, masukkan ke tabel profiles dengan default role pembeli
     if (authData.user) {
         const { error: profileError } = await supabase.from('profiles').insert([
             {
                 id: authData.user.id,
                 full_name: fullName,
-                phone_number: phone || null,
+                phone_number: phone,
                 is_buyer: true,   // Default Pembeli (Shopee Style)
                 is_seller: false, // Belum aktif sebagai seller
             }
         ])
 
         if (profileError) {
+            const profileErrorMsg = profileError.message.toLowerCase();
+            if (profileErrorMsg.includes('phone') || profileErrorMsg.includes('unique')) {
+                return { error: 'Nomor WhatsApp sudah terdaftar. Gunakan nomor lain.' };
+            }
             return { error: profileError.message }
         }
     }

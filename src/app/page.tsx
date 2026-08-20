@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import {
     Sparkles,
     ShoppingBag,
@@ -16,6 +17,7 @@ import FAQSection from '@/components/landing/FAQSection';
 import LandingFooter from '@/components/landing/LandingFooter';
 import { CartProvider } from '@/components/storefront/CartContext';
 import ProductCard from '@/components/storefront/ProductCard';
+import HeroHpMockup from '@/components/landing/HeroHpMockup';
 import CountUp from '@/components/reactbits/CountUp';
 import FadeContent from '@/components/reactbits/FadeContent';
 import { Toaster } from 'react-hot-toast';
@@ -80,15 +82,50 @@ export default async function LandingPage() {
         }
     }
 
-    // Fetch preview produk unggulan (maksimal 8 produk)
+    // Fetch preview produk unggulan (hanya produk aktif & stok > 0, maksimal 8 produk)
     const { data: rawProducts, error } = await supabase
         .from('products')
         .select('*, businesses(name, slug, city_name, province_name)')
         .eq('is_active', true)
+        .gt('stock', 0)
         .order('created_at', { ascending: false })
         .limit(8);
 
-    const products: ProductWithBusiness[] = rawProducts || [];
+    // Fetch count total UMKM (businesses) & total produk aktif (products) dari Supabase untuk statistik dinamis
+    const { count: totalBusinesses } = await supabase
+        .from('businesses')
+        .select('*', { count: 'exact', head: true });
+
+    const { count: totalProductsCount } = await supabase
+        .from('products')
+        .select('*', { count: 'exact', head: true });
+
+    const statsData = [
+        {
+            id: 'umkm',
+            value: totalBusinesses && totalBusinesses > 0 ? totalBusinesses : 500,
+            suffix: '+',
+            label: 'UMKM Bergabung',
+            separator: '.',
+        },
+        {
+            id: 'produk',
+            value: totalProductsCount && totalProductsCount > 0 ? totalProductsCount : 1250,
+            suffix: '+',
+            label: 'Produk Lokal',
+            separator: '.',
+        },
+        {
+            id: 'ai-assistant',
+            value: 24,
+            suffix: ' Jam',
+            label: 'Bantuan Asisten AI',
+            separator: '.',
+        },
+    ];
+
+    // Filter ketat memastikan hanya produk berstok (stock > 0) yang tampil di Landing Page
+    const products: ProductWithBusiness[] = (rawProducts || []).filter(p => (p.stock || 0) > 0);
 
     const getBusiness = (b: BusinessRel | BusinessRel[] | null): BusinessRel | null => {
         if (!b) return null;
@@ -107,76 +144,76 @@ export default async function LandingPage() {
                 <LandingNavbar user={user} profile={profile} />
 
                 <main className="flex-1 space-y-16 sm:space-y-24 pb-20">
-                    {/* 2. HERO SECTION BANNER UTAMA */}
-                    <section suppressHydrationWarning className="relative overflow-hidden bg-gradient-to-br from-slate-950 via-slate-900 to-amber-950 text-white pt-14 sm:pt-24 pb-16 sm:pb-28 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
-                        {/* Background Decorative Glow Elements */}
-                        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[36rem] h-[36rem] bg-terracotta/15 rounded-full blur-3xl pointer-events-none" />
-                        <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+                    {/* 2. HERO SECTION BANNER UTAMA (DARK MODE ELEGAN, POSISI PRESISI FIT ABOVE THE FOLD) */}
+                    <section suppressHydrationWarning className="relative overflow-hidden bg-[#0B1120] text-white min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-90px)] flex items-center py-10 lg:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
+                        {/* Background Ambient Decorative Glows */}
+                        <div className="absolute top-10 left-10 w-[28rem] h-[28rem] bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
+                        <div className="absolute bottom-10 right-10 w-[28rem] h-[28rem] bg-terracotta/25 rounded-full blur-3xl pointer-events-none" />
 
-                        <div suppressHydrationWarning className="max-w-4xl mx-auto relative z-10 text-center space-y-7 sm:space-y-8">
-                            {/* Regional Badge with Fade */}
-                            <FadeContent direction="up" distance={16} duration={1000} blur>
-                                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-500/20 border border-amber-400/40 text-amber-300 rounded-full text-xs font-semibold uppercase tracking-wider backdrop-blur-md">
-                                    <Sparkles className="w-4 h-4 text-amber-400" />
-                                    <span>Pemberdayaan UMKM Regional DIY & Jawa Tengah</span>
-                                </div>
-                            </FadeContent>
+                        <div suppressHydrationWarning className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center w-full">
+                            {/* KOLOM KANAN (Gambar Mockup HP max-h-58vh) -> 5-KOLOM DESKTOP */}
+                            <div className="order-1 lg:order-2 lg:col-span-5 relative flex justify-center items-center w-full mx-auto">
+                                <HeroHpMockup />
+                            </div>
 
-                            {/* Headline with Fade */}
-                            <FadeContent direction="up" distance={24} duration={1100} delay={150} blur>
-                                <h1 className="text-3xl sm:text-5xl lg:text-6xl font-outfit font-black tracking-tight leading-tight">
-                                    Kembangkan Usaha UMKM Lebih Mudah dengan{' '}
-                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-amber-200 to-amber-500">
-                                        Bantuan Kecerdasan Buatan
-                                    </span>
-                                </h1>
-                            </FadeContent>
+                            {/* KOLOM KIRI (Teks, CTA, & Stats - Ditarik ke Atas Tanpa Extra Margin Top) -> 7-KOLOM DESKTOP */}
+                            <div className="order-2 lg:order-1 lg:col-span-7 space-y-2.5 sm:space-y-3.5 lg:space-y-4 text-center lg:text-left flex flex-col items-center lg:items-start m-0 p-0">
+                                {/* H1 Headline (Diet Tipografi: max text-4xl lg:text-[2.75rem]) */}
+                                <FadeContent direction="up" distance={16} duration={850} delay={100} blur className="w-full">
+                                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] font-outfit font-bold tracking-tight leading-tight text-white text-center lg:text-left w-full">
+                                        Kembangkan Usaha UMKM Lebih Mudah dengan{' '}
+                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-terracotta via-amber-500 to-amber-400">
+                                            Bantuan Kecerdasan Buatan
+                                        </span>
+                                    </h1>
+                                </FadeContent>
 
-                            {/* Subtitle with Fade */}
-                            <FadeContent direction="up" distance={20} duration={1000} delay={300}>
-                                <p className="text-slate-300 text-sm sm:text-lg leading-relaxed max-w-2xl mx-auto">
-                                    Platform dagang cerdas dan Asisten AI untuk membantu pelaku UMKM di segala sektor mengelola etalase toko digital, pengingat stok otomatis, dan strategi bisnis untuk meningkatkan omzet.
-                                </p>
-                            </FadeContent>
+                                {/* Subtitle Description (Diet Paragraf: text-xs sm:text-sm lg:text-base) */}
+                                <FadeContent direction="up" distance={14} duration={850} delay={220} className="w-full">
+                                    <p className="text-slate-300 text-xs sm:text-sm lg:text-base leading-relaxed text-center lg:text-left w-full max-w-2xl lg:max-w-none">
+                                        Platform dagang cerdas dan Asisten AI untuk membantu pelaku UMKM di segala sektor mengelola etalase toko digital, pengingat stok otomatis, dan strategi bisnis untuk meningkatkan omzet.
+                                    </p>
+                                </FadeContent>
 
-                            {/* CTA Buttons with Fade */}
-                            <FadeContent direction="up" distance={20} duration={1000} delay={450}>
-                                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-2">
-                                    <Link
-                                        href="/katalog"
-                                        className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-terracotta to-amber-600 hover:from-terracotta-hover hover:to-amber-700 text-white rounded-2xl font-outfit font-bold text-sm sm:text-base shadow-xl shadow-terracotta/25 flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
-                                    >
-                                        <ShoppingBag className="w-5 h-5" />
-                                        <span>Jelajahi Katalog Produk</span>
-                                    </Link>
+                                {/* Call to Action Button Group (Compact Spacing) */}
+                                <FadeContent direction="up" distance={14} duration={850} delay={340} className="w-full">
+                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-2.5 sm:gap-3 pt-0.5 w-full">
+                                        <Link
+                                            href="/katalog"
+                                            className="w-full sm:w-auto px-5 py-2.5 sm:py-3 bg-gradient-to-r from-terracotta to-amber-600 hover:from-terracotta-hover hover:to-amber-700 text-white rounded-2xl font-outfit font-semibold text-xs sm:text-sm shadow-lg shadow-terracotta/25 flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
+                                        >
+                                            <ShoppingBag className="w-4 h-4" />
+                                            <span>Jelajahi Katalog Produk</span>
+                                        </Link>
 
-                                    <Link
-                                        href={profile?.is_seller ? "/dashboard" : (user ? "/buka-toko" : "/register")}
-                                        className="w-full sm:w-auto px-8 py-4 bg-slate-800/90 hover:bg-slate-800 text-slate-200 hover:text-white border border-slate-700 rounded-2xl font-outfit font-bold text-sm sm:text-base flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
-                                    >
-                                        <Store className="w-5 h-5 text-amber-400" />
-                                        <span>{profile?.is_seller ? "Dashboard Toko Saya" : "Buka Toko UMKM Gratis"}</span>
-                                    </Link>
-                                </div>
-                            </FadeContent>
-
-                            {/* Key Highlights Metric Badges with React Bits CountUp */}
-                            <FadeContent direction="up" distance={20} duration={1000} delay={600}>
-                                <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-8 border-t border-slate-800/80 max-w-md mx-auto">
-                                    <div className="space-y-1">
-                                        <CountUp to={500} suffix="+" duration={3.2} className="text-xl sm:text-2xl font-outfit font-black text-amber-400 block" />
-                                        <p className="text-[10px] sm:text-xs text-slate-400 font-medium">UMKM Bergabung</p>
+                                        <Link
+                                            href={profile?.is_seller ? "/dashboard" : (user ? "/buka-toko" : "/register")}
+                                            className="w-full sm:w-auto px-5 py-2.5 sm:py-3 bg-slate-800/50 hover:bg-slate-800 text-white border border-slate-700 hover:border-slate-600 rounded-2xl font-outfit font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
+                                        >
+                                            <Store className="w-4 h-4 text-terracotta" />
+                                            <span>{profile?.is_seller ? "Dashboard Toko Saya" : "Buka Toko UMKM Gratis"}</span>
+                                        </Link>
                                     </div>
-                                    <div className="space-y-1">
-                                        <CountUp to={1250} suffix="+" duration={3.5} separator="." className="text-xl sm:text-2xl font-outfit font-black text-amber-400 block" />
-                                        <p className="text-[10px] sm:text-xs text-slate-400 font-medium">Produk Lokal</p>
+                                </FadeContent>
+
+                                {/* 3-Column Dynamic Stats Divider (Compact Typography & Padding) */}
+                                <FadeContent direction="up" distance={14} duration={850} delay={460} className="w-full">
+                                    <div className="grid grid-cols-3 gap-2.5 sm:gap-3 pt-2.5 sm:pt-3 border-t border-slate-800/80 max-w-md mx-auto lg:mx-0 text-center lg:text-left w-full">
+                                        {statsData.map((stat) => (
+                                            <div key={stat.id} className="space-y-0">
+                                                <CountUp
+                                                    to={stat.value}
+                                                    suffix={stat.suffix}
+                                                    separator={stat.separator}
+                                                    duration={3.2}
+                                                    className="text-lg sm:text-xl font-outfit font-bold text-terracotta block text-center lg:text-left"
+                                                />
+                                                <p className="text-[10px] sm:text-[11px] text-slate-400 font-semibold text-center lg:text-left">{stat.label}</p>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <div className="space-y-1">
-                                        <CountUp to={24} suffix=" Jam" duration={2.8} className="text-xl sm:text-2xl font-outfit font-black text-amber-400 block" />
-                                        <p className="text-[10px] sm:text-xs text-slate-400 font-medium">Bantuan Asisten AI</p>
-                                    </div>
-                                </div>
-                            </FadeContent>
+                                </FadeContent>
+                            </div>
                         </div>
                     </section>
 

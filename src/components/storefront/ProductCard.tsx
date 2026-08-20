@@ -83,10 +83,14 @@ export default function ProductCard({ product, storeSlug, storeName, locationNam
                         <img
                             src={product.image_url}
                             alt={product.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
+                                isOutOfStock ? 'opacity-60 grayscale-[50%]' : ''
+                            }`}
                         />
                     ) : (
-                        <div className="w-full h-full flex items-center justify-center text-slate-400 bg-slate-100">
+                        <div className={`w-full h-full flex items-center justify-center text-slate-400 bg-slate-100 ${
+                            isOutOfStock ? 'opacity-60 grayscale-[50%]' : ''
+                        }`}>
                             <Store className="w-10 h-10 stroke-1" />
                         </div>
                     )}
