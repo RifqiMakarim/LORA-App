@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Package,
@@ -64,11 +64,27 @@ export default function InventoryClient({
   const [submitting, setSubmitting] = useState(false);
 
   // Kategori CRUD State
-  const [customCategories, setCustomCategories] = useState<string[]>([]);
+  const [dbCategories, setDbCategories] = useState<string[]>([]);
   const [isCategoriesModalOpen, setIsCategoriesModalOpen] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
+
+  // Load data kategori dari database saat komponen dimuat
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await fetch('/api/seller/categories');
+        const data = await res.json();
+        if (res.ok && data.data) {
+          setDbCategories(data.data);
+        }
+      } catch (err) {
+        console.error('Gagal mengambil kategori:', err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   // Formatter mata uang Rupiah
   const formatCurrency = (val: number) => {
@@ -90,12 +106,13 @@ export default function InventoryClient({
     return Array.from(list);
   }, [products]);
 
-  // Gabungkan kategori bawaan, kategori dari produk, dan kategori kustom, lalu pastikan "Lainnya" selalu berada di akhir list
+  // Gabungkan kategori database (atau default bawaan) dan pastikan "Lainnya" selalu berada di akhir list
   const allCategories = useMemo(() => {
-    const set = new Set([...defaultCategories, ...categoriesList, ...customCategories]);
+    const list = dbCategories.length > 0 ? dbCategories : [...defaultCategories, ...categoriesList];
+    const set = new Set(list);
     const listWithoutLainnya = Array.from(set).filter(c => c !== 'Lainnya');
     return [...listWithoutLainnya, 'Lainnya'];
-  }, [categoriesList, customCategories]);
+  }, [dbCategories, categoriesList]);
 
   // Klasifikasi Status Inventaris per Produk
   const classifiedProducts = useMemo(() => {
@@ -188,7 +205,7 @@ export default function InventoryClient({
   };
 
   // Kategori CRUD Handlers
-  const handleAddCategory = () => {
+  const handleAddCategory = async () => {
     if (!newCategoryName.trim()) {
       toast.error('Nama kategori tidak boleh kosong.');
       return;
@@ -197,9 +214,23 @@ export default function InventoryClient({
       toast.error('Kategori sudah terdaftar.');
       return;
     }
-    setCustomCategories(prev => [...prev, newCategoryName.trim()]);
-    setNewCategoryName('');
-    toast.success('Kategori baru ditambahkan ke pilihan!');
+
+    try {
+      const res = await fetch('/api/seller/categories', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newCategoryName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Gagal menambahkan kategori');
+
+      toast.success('Kategori baru ditambahkan ke database!');
+      setDbCategories(prev => [...prev, newCategoryName.trim()]);
+      setNewCategoryName('');
+      router.refresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Gagal menambahkan kategori');
+    }
   };
 
   const handleRenameCategory = async (oldName: string, newName: string) => {
@@ -222,7 +253,7 @@ export default function InventoryClient({
       if (!res.ok) throw new Error(data.error || 'Gagal mengubah kategori');
 
       toast.success('Kategori berhasil diperbarui!');
-      setCustomCategories(prev => prev.map(c => c === oldName ? newName.trim() : c));
+      setDbCategories(prev => prev.map(c => c === oldName ? newName.trim() : c));
       setEditingCategoryIndex(null);
       router.refresh();
     } catch (err: any) {
@@ -245,7 +276,7 @@ export default function InventoryClient({
       if (!res.ok) throw new Error(data.error || 'Gagal menghapus kategori');
 
       toast.success('Kategori berhasil dihapus.');
-      setCustomCategories(prev => prev.filter(c => c !== catName));
+      setDbCategories(prev => prev.filter(c => c !== catName));
       router.refresh();
     } catch (err: any) {
       toast.error(err.message || 'Gagal menghapus kategori');
