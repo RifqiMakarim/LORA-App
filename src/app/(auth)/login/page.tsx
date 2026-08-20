@@ -58,7 +58,9 @@ export default function LoginPage() {
                     {/* Bagian Atas (Branding) */}
                     <div className="relative z-10">
                         <div className="flex items-center gap-2.5 mb-2">
-                            <span className="h-2.5 w-2.5 rounded-full bg-terracotta animate-pulse"></span>
+                            <div className="w-9 h-9 rounded-full bg-white p-0.5 flex items-center justify-center shadow-lg shadow-terracotta/30 border border-slate-100 overflow-hidden flex-shrink-0">
+                                <Image src="/images/loralogo.jpeg" alt="Logo LORA" width={36} height={36} className="w-full h-full object-cover rounded-full" />
+                            </div>
                             <h1 className="text-4xl font-outfit font-bold tracking-tight">LORA</h1>
                         </div>
                         <h2 className="text-2xl font-outfit font-bold mt-2">Senang Bertemu Anda Lagi</h2>

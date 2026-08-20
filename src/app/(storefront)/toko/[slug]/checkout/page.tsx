@@ -267,18 +267,19 @@ export default function DedicatedCheckoutPage() {
                         <ArrowLeft className="w-4 h-4" />
                         <span>Kembali</span>
                     </button>
-                    <h1 className="text-2xl sm:text-3xl font-outfit font-black text-slate-900 flex items-center gap-2">
-                        <span>Checkout Pesanan</span>
-                        <span className="text-xs bg-emerald-100 text-emerald-900 border border-emerald-300 px-3 py-1 rounded-full font-bold">
-                            Self-Ordering & P2P Direct
-                        </span>
+                    <h1 className="text-2xl sm:text-3xl font-outfit font-black text-slate-900">
+                        Checkout Pesanan
                     </h1>
                 </div>
 
-                <div className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white px-4 py-2 rounded-2xl border border-slate-200 shadow-sm w-fit">
-                    <Store className="w-4 h-4 text-terracotta" />
+                <Link
+                    href={`/toko/${slug}`}
+                    className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white hover:bg-orange-50/90 hover:text-terracotta px-4 py-2 rounded-2xl border border-slate-200 hover:border-terracotta shadow-xs w-fit cursor-pointer transition-all active:scale-95 group"
+                    title={`Kunjungi Toko ${storeTitle}`}
+                >
+                    <Store className="w-4 h-4 text-terracotta group-hover:scale-110 transition-transform" />
                     <span>Toko: {storeTitle}</span>
-                </div>
+                </Link>
             </div>
 
             {/* Main Split Layout: Left Column (7 cols), Right Column (5 cols) */}
@@ -318,14 +319,14 @@ export default function DedicatedCheckoutPage() {
                                         )}
                                     </div>
 
-                                    <div className="flex-1 min-w-0 space-y-1">
+                                    <div className="flex-1 min-w-0 overflow-hidden space-y-1">
                                         <h3 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                                             {product.name}
                                         </h3>
-                                        <p className="text-xs font-outfit text-slate-600">
+                                        <p className="text-xs font-outfit text-slate-600 truncate">
                                             Rp {product.price.toLocaleString('id-ID')}
                                         </p>
-                                        <p className="text-[11px] font-bold text-terracotta">
+                                        <p className="text-[11px] font-bold text-terracotta truncate">
                                             Subtotal: Rp {(product.price * quantity).toLocaleString('id-ID')}
                                         </p>
                                     </div>
@@ -455,11 +456,10 @@ export default function DedicatedCheckoutPage() {
                                 {businessInfo?.qris_image_url && (
                                     <label
                                         onClick={() => setSelectedPaymentMethod('qris')}
-                                        className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                                            selectedPaymentMethod === 'qris'
-                                                ? 'border-terracotta bg-amber-50/50 shadow-md ring-2 ring-terracotta/20'
-                                                : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
-                                        }`}
+                                        className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${selectedPaymentMethod === 'qris'
+                                            ? 'border-terracotta bg-amber-50/50 shadow-md ring-2 ring-terracotta/20'
+                                            : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <input
@@ -481,11 +481,10 @@ export default function DedicatedCheckoutPage() {
                                 {businessInfo?.bank_account_number && (
                                     <label
                                         onClick={() => setSelectedPaymentMethod('transfer')}
-                                        className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                                            selectedPaymentMethod === 'transfer'
-                                                ? 'border-terracotta bg-amber-50/50 shadow-md ring-2 ring-terracotta/20'
-                                                : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
-                                        }`}
+                                        className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${selectedPaymentMethod === 'transfer'
+                                            ? 'border-terracotta bg-amber-50/50 shadow-md ring-2 ring-terracotta/20'
+                                            : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
+                                            }`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <input
@@ -508,11 +507,10 @@ export default function DedicatedCheckoutPage() {
                                 {/* Opsi C: Bayar di Kasir (WAJIB SELALU ADA) */}
                                 <label
                                     onClick={() => setSelectedPaymentMethod('cash')}
-                                    className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                                        selectedPaymentMethod === 'cash'
-                                            ? 'border-terracotta bg-amber-50/50 shadow-md ring-2 ring-terracotta/20'
-                                            : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
-                                    }`}
+                                    className={`p-4 rounded-2xl border-2 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${selectedPaymentMethod === 'cash'
+                                        ? 'border-terracotta bg-amber-50/50 shadow-md ring-2 ring-terracotta/20'
+                                        : 'border-slate-200 bg-slate-50 hover:bg-slate-100 hover:border-slate-300'
+                                        }`}
                                 >
                                     <div className="flex items-center gap-2">
                                         <input
@@ -548,32 +546,32 @@ export default function DedicatedCheckoutPage() {
 
                     {/* Summary Ringkasan Total */}
                     <div className="bg-slate-900 text-white p-5 sm:p-6 rounded-3xl shadow-xl space-y-3">
-                        <div className="flex justify-between text-xs text-slate-300">
-                            <span>Total Harga Produk ({totalItemsCount} item):</span>
-                            <span>Rp {cartTotal.toLocaleString('id-ID')}</span>
+                        <div className="flex justify-between items-center gap-3 text-xs text-slate-300 min-w-0 overflow-hidden">
+                            <span className="flex-shrink-0">Total Harga Produk ({totalItemsCount} item):</span>
+                            <span className="font-semibold text-slate-200 truncate break-all max-w-full">Rp {cartTotal.toLocaleString('id-ID')}</span>
                         </div>
 
                         {appliedVoucher && (
-                            <div className="flex justify-between text-xs text-emerald-400 font-semibold">
-                                <span>Diskon Kupon ({appliedVoucher.code}):</span>
-                                <span>- Rp {appliedVoucher.discount_amount.toLocaleString('id-ID')}</span>
+                            <div className="flex justify-between items-center gap-3 text-xs text-emerald-400 font-semibold min-w-0 overflow-hidden">
+                                <span className="flex-shrink-0">Diskon Kupon ({appliedVoucher.code}):</span>
+                                <span className="truncate max-w-full">- Rp {appliedVoucher.discount_amount.toLocaleString('id-ID')}</span>
                             </div>
                         )}
 
-                        <div className="flex justify-between text-xs text-slate-300">
-                            <span>Metode Pembayaran Terpilih:</span>
-                            <span className="font-bold text-amber-400 capitalize">
+                        <div className="flex justify-between items-center gap-3 text-xs text-slate-300 min-w-0 overflow-hidden">
+                            <span className="flex-shrink-0">Metode Pembayaran Terpilih:</span>
+                            <span className="font-bold text-amber-400 capitalize truncate max-w-full">
                                 {selectedPaymentMethod === 'qris'
                                     ? 'QRIS Toko'
                                     : selectedPaymentMethod === 'transfer'
-                                    ? `Transfer Bank (${businessInfo?.bank_name || ''})`
-                                    : 'Bayar di Kasir (Tunai)'}
+                                        ? `Transfer Bank (${businessInfo?.bank_name || ''})`
+                                        : 'Bayar di Kasir (Tunai)'}
                             </span>
                         </div>
 
-                        <div className="flex justify-between text-base font-outfit font-extrabold text-white pt-3 border-t border-slate-800">
-                            <span>Total Pembayaran:</span>
-                            <span className="text-amber-400 text-xl font-bold">
+                        <div className="flex justify-between items-center gap-3 text-base font-outfit font-extrabold text-white pt-3 border-t border-slate-800 min-w-0 overflow-hidden">
+                            <span className="flex-shrink-0">Total Pembayaran:</span>
+                            <span className="text-amber-400 text-xl font-bold truncate break-all max-w-full">
                                 Rp {effectiveTotal.toLocaleString('id-ID')}
                             </span>
                         </div>
@@ -623,9 +621,9 @@ export default function DedicatedCheckoutPage() {
                                 </div>
                             )}
 
-                            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center space-y-1">
+                            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center space-y-1 min-w-0 overflow-hidden">
                                 <p className="text-[11px] text-amber-900 font-semibold">Total Tagihan QRIS:</p>
-                                <p className="text-2xl font-outfit font-black text-amber-900">
+                                <p className="text-2xl font-outfit font-black text-amber-900 truncate break-all max-w-full">
                                     Rp {effectiveTotal.toLocaleString('id-ID')}
                                 </p>
                                 {appliedVoucher && (
@@ -680,9 +678,9 @@ export default function DedicatedCheckoutPage() {
 
                             {/* Detail Rekening & Tombol Salin */}
                             <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                                <div className="space-y-1">
+                                <div className="space-y-1 min-w-0 overflow-hidden">
                                     <p className="text-[11px] text-slate-500 font-medium">Nomor Rekening:</p>
-                                    <p className="text-xl font-mono font-black text-slate-900 tracking-wider">
+                                    <p className="text-xl font-mono font-black text-slate-900 tracking-wider truncate break-all max-w-full">
                                         {businessInfo?.bank_account_number || '-'}
                                     </p>
                                 </div>
@@ -702,9 +700,9 @@ export default function DedicatedCheckoutPage() {
                                 </button>
                             </div>
 
-                            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center space-y-1">
+                            <div className="bg-amber-50 p-4 rounded-2xl border border-amber-200 text-center space-y-1 min-w-0 overflow-hidden">
                                 <p className="text-[11px] text-amber-900 font-semibold">Total Transfer:</p>
-                                <p className="text-2xl font-outfit font-black text-amber-900">
+                                <p className="text-2xl font-outfit font-black text-amber-900 truncate break-all max-w-full">
                                     Rp {effectiveTotal.toLocaleString('id-ID')}
                                 </p>
                                 {appliedVoucher && (
@@ -761,9 +759,9 @@ export default function DedicatedCheckoutPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center space-y-1">
+                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 text-center space-y-1 min-w-0 overflow-hidden">
                                 <p className="text-[11px] text-slate-500 font-semibold">Total Tagihan Tunai:</p>
-                                <p className="text-2xl font-outfit font-black text-slate-900">
+                                <p className="text-2xl font-outfit font-black text-slate-900 truncate break-all max-w-full">
                                     Rp {effectiveTotal.toLocaleString('id-ID')}
                                 </p>
                                 {appliedVoucher && (
