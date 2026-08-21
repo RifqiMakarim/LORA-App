@@ -1,0 +1,62 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Primary & Accents */
+  --color-indigo: #1E293B;
+  --color-terracotta: #D97706;
+  --color-terracotta-hover: #B45309;
+  --color-surface: #FFFFFF;
+
+  /* BHS & Inventory Status Colors */
+  --color-status-safe: #10B981;
+  --color-status-warning: #F59E0B;
+  --color-status-danger: #F43F5E;
+  --color-status-info: #3B82F6;
+
+  /* Typography */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-outfit: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Base Styles */
+@layer base {
+  body {
+    background-color: #F8FAFC;
+    color: var(--color-indigo);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 4s linear infinite;
+}
+
+/* Hide Scrollbar Utility */
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Hide spinners for inputs with no-spinner class */
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
+}

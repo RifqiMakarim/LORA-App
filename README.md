@@ -54,4 +54,19 @@ LORA menjembatani data operasional harian UMKM dengan mesin analitik berbasis ke
 
 ---
 
+## 📚 Spesifikasi & Dokumentasi (Spec-Driven Development)
+
+Project ini dibangun dengan pendekatan **Spec-Driven Development** sebagai acuan utama bagi pengembang dan AI Coding Agent:
+
+- 📄 [**PRD.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/PRD.md): Product Requirements Document (Fitur, 3 Role + Guest, Dual-Role flow, In-App Checkout).
+- 🏗️ [**Architecture.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Architecture.md): Arsitektur Sistem, Next.js 16 App Router, Tech Stack, & Diagram Alur Data.
+- 🎨 [**Design.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Design.md): UI/UX Design System (Deep Indigo `#1E293B` & Terracotta Warm `#D97706`).
+- 📜 [**Rules.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Rules.md): Aturan Mutlak & Standar Rekayasa Perangkat Lunak untuk AI Coding Agent.
+- 🗄️ [**Schema.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Schema.md): DDL SQL Lengkap, RLS Policies, ERD Blueprint, & Seed Data DIY-Jateng.
+- 📈 [**Forecasting.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/Forecasting.md): Model Matematika Holt-Winters Additive, Event Overlay, & Prediksi Penjualan AI.
+- 👥 [**CustomerSegmentation.md**](file:///d:/LOMBA/APPS%20DEV%20-%20UIN%20GUSDUR/docs/CustomerSegmentation.md): Engine Segmentasi RFM, Kalkulasi CLV, Alat CRM Direct WhatsApp & Generator Voucher.
+
+---
+
 *Dikembangkan untuk mendukung Digitalisasi UMKM & Ekonomi Kreatif di Daerah Istimewa Yogyakarta & Jawa Tengah.*
+
