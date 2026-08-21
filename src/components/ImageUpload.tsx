@@ -39,12 +39,34 @@ export default function ImageUpload({
         }
     }, [value]);
 
+    const isBanner = aspectRatio === 'banner';
+
+    // Helper untuk mereset scroll lock yang disuntikkan oleh widget pihak ketiga (seperti Cloudinary)
+    const forceUnlockScroll = () => {
+        if (typeof document !== 'undefined') {
+            document.body.style.overflow = '';
+            document.body.style.paddingRight = '';
+            document.documentElement.style.overflow = '';
+        }
+    };
+
+    // Pastikan saat komponen ImageUpload dilepas (unmount), scroll body dipulihkan
+    useEffect(() => {
+        return () => {
+            forceUnlockScroll();
+        };
+    }, []);
+
     // Handle saat upload selesai dari CldUploadWidget atau input file
     const handleUploadSuccess = (url: string) => {
         setIsUploading(false);
         setPendingUrl(url);
         setIsSuccess(true);
         setIsConfirmed(false);
+        forceUnlockScroll();
+        // Beri delay singkat untuk menangkap style yang disuntikkan secara asinkron saat widget menutup
+        setTimeout(forceUnlockScroll, 100);
+        setTimeout(forceUnlockScroll, 300);
     };
 
     // Handle saat pengguna mengeklik tombol 'Selesai' / 'Gunakan Foto Ini'
@@ -54,6 +76,7 @@ export default function ImageUpload({
         setIsConfirmed(true);
         setIsSuccess(false);
         onConfirm(pendingUrl);
+        forceUnlockScroll();
     };
 
     // Handle Ganti / Unggah Ulang
@@ -64,6 +87,7 @@ export default function ImageUpload({
         if (onRemove && !confirmedUrl) {
             onRemove();
         }
+        forceUnlockScroll();
     };
 
     // Handle Hapus Foto sepenuhnya
@@ -75,9 +99,8 @@ export default function ImageUpload({
         if (onRemove) {
             onRemove();
         }
+        forceUnlockScroll();
     };
-
-    const isBanner = aspectRatio === 'banner';
 
     return (
         <div className="space-y-2 w-full">
@@ -120,6 +143,11 @@ export default function ImageUpload({
                                     if (typeof result.info !== 'string' && result.info?.secure_url) {
                                         handleUploadSuccess(result.info.secure_url);
                                     }
+                                }}
+                                onClose={() => forceUnlockScroll()}
+                                onError={() => {
+                                    setIsUploading(false);
+                                    forceUnlockScroll();
                                 }}
                             >
                                 {({ open }) => (
@@ -179,6 +207,11 @@ export default function ImageUpload({
                                         handleUploadSuccess(result.info.secure_url);
                                     }
                                 }}
+                                onClose={() => forceUnlockScroll()}
+                                onError={() => {
+                                    setIsUploading(false);
+                                    forceUnlockScroll();
+                                }}
                             >
                                 {({ open }) => (
                                     <button
@@ -216,6 +249,11 @@ export default function ImageUpload({
                             if (typeof result.info !== 'string' && result.info?.secure_url) {
                                 handleUploadSuccess(result.info.secure_url);
                             }
+                        }}
+                        onClose={() => forceUnlockScroll()}
+                        onError={() => {
+                            setIsUploading(false);
+                            forceUnlockScroll();
                         }}
                     >
                         {({ open }) => (
