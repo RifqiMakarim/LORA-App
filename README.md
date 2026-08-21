@@ -183,8 +183,8 @@ LORA-APP/
 
 ### Langkah 1: Kloning Repositori
 ```bash
-git clone https://github.com/RifqiMakarim/MERCA-App.git
-cd MERCA-App
+git clone https://github.com/RifqiMakarim/LORA-App.git
+cd LORA-App
 ```
 
 ### Langkah 2: Instalasi Dependensi
