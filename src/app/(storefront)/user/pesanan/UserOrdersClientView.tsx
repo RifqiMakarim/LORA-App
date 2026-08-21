@@ -18,7 +18,9 @@ import {
     ExternalLink,
     Ban,
     Search,
-    Filter
+    Filter,
+    ZoomIn,
+    Download
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
@@ -147,6 +149,26 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
             });
         } finally {
             setCancellingId(null);
+        }
+    };
+
+    // Handler Unduh QRIS Toko
+    const handleDownloadOrderQris = async (qrisUrl: string, storeName?: string) => {
+        if (!qrisUrl) return;
+        try {
+            const response = await fetch(qrisUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `QRIS-${(storeName || 'Toko').replace(/[^a-zA-Z0-9]/g, '-')}.png`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            toast.success('Gambar QRIS berhasil diunduh');
+        } catch {
+            window.open(qrisUrl, '_blank');
         }
     };
 
@@ -521,12 +543,29 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
                                     Silakan pindai (scan) Kode QRIS di bawah ini untuk menyelesaikan pembayaran:
                                 </p>
                                 {selectedOrderForPayment.businesses?.qris_image_url ? (
-                                    <div className="w-48 h-48 mx-auto bg-slate-100 border border-slate-200 rounded-2xl overflow-hidden p-2 shadow-inner">
-                                        <img
-                                            src={selectedOrderForPayment.businesses.qris_image_url}
-                                            alt="QRIS Toko"
-                                            className="w-full h-full object-contain"
-                                        />
+                                    <div className="space-y-3">
+                                        <div className="w-full max-w-[320px] mx-auto bg-slate-50 border-2 border-slate-200 rounded-2xl overflow-hidden p-2.5 sm:p-3 shadow-inner flex flex-col items-center">
+                                            <div className="w-full bg-white p-2 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-center">
+                                                <img
+                                                    src={selectedOrderForPayment.businesses.qris_image_url}
+                                                    alt="QRIS Toko"
+                                                    className="w-full h-auto min-h-[200px] max-h-[320px] object-contain rounded-lg"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        {/* Quick Download QRIS Button */}
+                                        <button
+                                            type="button"
+                                            onClick={() => handleDownloadOrderQris(
+                                                selectedOrderForPayment.businesses!.qris_image_url!,
+                                                selectedOrderForPayment.businesses?.name
+                                            )}
+                                            className="w-full max-w-[320px] mx-auto py-2 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all border border-slate-200 cursor-pointer"
+                                        >
+                                            <Download className="w-3.5 h-3.5 text-emerald-600" />
+                                            <span>Unduh Gambar QRIS</span>
+                                        </button>
                                     </div>
                                 ) : (
                                     <div className="p-6 bg-amber-50 text-amber-800 rounded-2xl text-xs font-bold">
