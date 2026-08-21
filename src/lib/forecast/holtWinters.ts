@@ -78,7 +78,7 @@ export interface SalesForecastResult {
   quiet_summary: DaysClassificationSummary;
   daily_stock_recommendations: DailyStockRecommendation[];
   auto_insight: string;
-  ai_qualitative_note?: string;
+  ai_qualitative_note?: string | null;
 }
 
 export function fillTimeSeriesGaps(rawData: DailySalesPoint[], windowDays: number): DailySalesPoint[] {

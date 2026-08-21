@@ -74,11 +74,11 @@ export default function ProductCard({ product, storeSlug, storeName, locationNam
     };
 
     return (
-        <div className="bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between group">
+        <div className="h-full bg-white border border-slate-200/90 rounded-2xl sm:rounded-3xl overflow-hidden shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-200 flex flex-col justify-between group">
             {/* Card Content wrapped in Link to Product Detail */}
-            <Link href={productDetailUrl} className="flex-1 flex flex-col justify-between">
+            <Link href={productDetailUrl} className="flex-1 flex flex-col justify-start">
                 {/* Product Image Thumbnail */}
-                <div className="relative aspect-square overflow-hidden bg-slate-100 block">
+                <div className="relative aspect-square overflow-hidden bg-slate-100 block flex-shrink-0">
                     {product.image_url ? (
                         <img
                             src={product.image_url}
@@ -124,27 +124,28 @@ export default function ProductCard({ product, storeSlug, storeName, locationNam
                     </div>
                 </div>
 
-                {/* Product Info Body */}
-                <div className="p-3 sm:p-4 pb-2 space-y-1">
+                {/* Product Info Body with Consistent Title Height */}
+                <div className="p-3 sm:p-4 pb-2 space-y-1 flex-1 flex flex-col justify-start">
                     <span className="text-[10px] sm:text-[11px] font-bold text-slate-400 group-hover:text-terracotta uppercase tracking-wider transition-colors inline-block truncate max-w-full">
                         {storeName}
                     </span>
 
-                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 leading-snug group-hover:text-terracotta transition-colors">
+                    {/* Judul dengan tinggi minimum tetap 2 baris (min-h) agar seluruh kartu simetris */}
+                    <h3 className="text-xs sm:text-sm font-bold text-slate-900 line-clamp-2 leading-snug min-h-[2.5rem] sm:min-h-[2.75rem] flex items-start group-hover:text-terracotta transition-colors">
                         {product.name}
                     </h3>
                 </div>
             </Link>
 
-            {/* Bottom Footer Area: Price & Action Buttons in Normal Flow (No Overlap) */}
-            <div className="px-3 pb-3 sm:px-4 sm:pb-4 pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto">
+            {/* Bottom Footer Area: Price & Action Buttons in Fixed Baseline */}
+            <div className="px-3 pb-3 sm:px-4 sm:pb-4 pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 mt-auto bg-white">
                 <div className="min-w-0 flex-1">
                     <p className="text-xs sm:text-base font-outfit font-extrabold text-slate-900 truncate">
                         Rp {product.price.toLocaleString('id-ID')}
                     </p>
                 </div>
 
-                {/* Action Buttons in flex flow (No Absolute Positioning) */}
+                {/* Action Buttons */}
                 <div className="flex items-center gap-1.5 flex-shrink-0">
                     {/* Icon Button: Tambah ke Keranjang */}
                     <button

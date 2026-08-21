@@ -104,6 +104,11 @@ const adminNavItems: NavItem[] = [
         icon: LayoutDashboard,
     },
     {
+        name: 'Riwayat Transaksi',
+        href: '/admin/transactions',
+        icon: ShoppingBag,
+    },
+    {
         name: 'Kelola Event',
         href: '/admin/events',
         icon: Calendar,

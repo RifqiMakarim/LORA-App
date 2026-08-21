@@ -11,7 +11,11 @@ import {
   ExternalLink,
   MapPin,
   Calendar,
-  Phone
+  Phone,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight
 } from 'lucide-react';
 
 interface ProfileItem {
@@ -40,6 +44,8 @@ interface AdminUsersStoresClientProps {
   businesses: BusinessItem[];
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function AdminUsersStoresClient({
   profiles,
   businesses,
@@ -47,6 +53,8 @@ export default function AdminUsersStoresClient({
   const [activeTab, setActiveTab] = useState<'users' | 'stores'>('users');
   const [userSearch, setUserSearch] = useState('');
   const [storeSearch, setStoreSearch] = useState('');
+  const [userPage, setUserPage] = useState(1);
+  const [storePage, setStorePage] = useState(1);
 
   // Filtering
   const filteredProfiles = profiles.filter(
@@ -63,6 +71,28 @@ export default function AdminUsersStoresClient({
       b.ownerName.toLowerCase().includes(storeSearch.toLowerCase()) ||
       b.city.toLowerCase().includes(storeSearch.toLowerCase())
   );
+
+  // Pagination for Users
+  const totalUserPages = Math.max(1, Math.ceil(filteredProfiles.length / ITEMS_PER_PAGE));
+  const currentUserPage = Math.min(userPage, totalUserPages);
+  const userStartIndex = (currentUserPage - 1) * ITEMS_PER_PAGE;
+  const paginatedProfiles = filteredProfiles.slice(userStartIndex, userStartIndex + ITEMS_PER_PAGE);
+
+  // Pagination for Stores
+  const totalStorePages = Math.max(1, Math.ceil(filteredBusinesses.length / ITEMS_PER_PAGE));
+  const currentStorePage = Math.min(storePage, totalStorePages);
+  const storeStartIndex = (currentStorePage - 1) * ITEMS_PER_PAGE;
+  const paginatedBusinesses = filteredBusinesses.slice(storeStartIndex, storeStartIndex + ITEMS_PER_PAGE);
+
+  const handleUserSearchChange = (val: string) => {
+    setUserSearch(val);
+    setUserPage(1);
+  };
+
+  const handleStoreSearchChange = (val: string) => {
+    setStoreSearch(val);
+    setStorePage(1);
+  };
 
   return (
     <div className="space-y-6">
@@ -117,7 +147,7 @@ export default function AdminUsersStoresClient({
                 type="text"
                 placeholder="Cari nama, ID, atau telepon..."
                 value={userSearch}
-                onChange={(e) => setUserSearch(e.target.value)}
+                onChange={(e) => handleUserSearchChange(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 focus:border-slate-350 rounded-xl text-xs font-semibold focus:outline-hidden"
               />
             </div>
@@ -135,8 +165,8 @@ export default function AdminUsersStoresClient({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filteredProfiles.length > 0 ? (
-                  filteredProfiles.map((p) => (
+                {paginatedProfiles.length > 0 ? (
+                  paginatedProfiles.map((p) => (
                     <tr key={p.id} className="hover:bg-slate-50/50">
                       <td className="p-3 font-mono text-[10px] text-slate-400 tracking-tight">
                         {p.id}
@@ -184,6 +214,83 @@ export default function AdminUsersStoresClient({
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls for Users */}
+          {filteredProfiles.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+              <p className="text-xs text-slate-500 font-medium">
+                Menampilkan <span className="font-bold text-slate-800">{userStartIndex + 1}</span> - <span className="font-bold text-slate-800">{Math.min(userStartIndex + ITEMS_PER_PAGE, filteredProfiles.length)}</span> dari <span className="font-bold text-slate-800">{filteredProfiles.length}</span> pengguna
+              </p>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setUserPage(1)}
+                  disabled={currentUserPage <= 1}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Halaman Pertama"
+                >
+                  <ChevronsLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserPage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentUserPage <= 1}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Halaman Sebelumnya"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  {Array.from({ length: totalUserPages }, (_, i) => i + 1)
+                    .filter((page) => {
+                      if (totalUserPages <= 5) return true;
+                      return Math.abs(page - currentUserPage) <= 1 || page === 1 || page === totalUserPages;
+                    })
+                    .map((page, idx, arr) => {
+                      const prevPage = arr[idx - 1];
+                      const isGap = prevPage && page - prevPage > 1;
+                      return (
+                        <div key={page} className="flex items-center gap-1">
+                          {isGap && <span className="text-xs text-slate-400 px-1">...</span>}
+                          <button
+                            type="button"
+                            onClick={() => setUserPage(page)}
+                            className={`min-w-[32px] h-8 px-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                              currentUserPage === page
+                                ? 'bg-indigo-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setUserPage((prev) => Math.min(totalUserPages, prev + 1))}
+                  disabled={currentUserPage >= totalUserPages}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Halaman Berikutnya"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserPage(totalUserPages)}
+                  disabled={currentUserPage >= totalUserPages}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Halaman Terakhir"
+                >
+                  <ChevronsRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -200,7 +307,7 @@ export default function AdminUsersStoresClient({
                 type="text"
                 placeholder="Cari toko, pemilik, kota..."
                 value={storeSearch}
-                onChange={(e) => setStoreSearch(e.target.value)}
+                onChange={(e) => handleStoreSearchChange(e.target.value)}
                 className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 focus:border-slate-350 rounded-xl text-xs font-semibold focus:outline-hidden"
               />
             </div>
@@ -219,8 +326,8 @@ export default function AdminUsersStoresClient({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filteredBusinesses.length > 0 ? (
-                  filteredBusinesses.map((b) => (
+                {paginatedBusinesses.length > 0 ? (
+                  paginatedBusinesses.map((b) => (
                     <tr key={b.id} className="hover:bg-slate-50/50">
                       <td className="p-3">
                         <p className="font-bold text-slate-800">{b.name}</p>
@@ -273,8 +380,86 @@ export default function AdminUsersStoresClient({
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls for Stores */}
+          {filteredBusinesses.length > 0 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+              <p className="text-xs text-slate-500 font-medium">
+                Menampilkan <span className="font-bold text-slate-800">{storeStartIndex + 1}</span> - <span className="font-bold text-slate-800">{Math.min(storeStartIndex + ITEMS_PER_PAGE, filteredBusinesses.length)}</span> dari <span className="font-bold text-slate-800">{filteredBusinesses.length}</span> toko
+              </p>
+
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setStorePage(1)}
+                  disabled={currentStorePage <= 1}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Halaman Pertama"
+                >
+                  <ChevronsLeft className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStorePage((prev) => Math.max(1, prev - 1))}
+                  disabled={currentStorePage <= 1}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Halaman Sebelumnya"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-1 px-1">
+                  {Array.from({ length: totalStorePages }, (_, i) => i + 1)
+                    .filter((page) => {
+                      if (totalStorePages <= 5) return true;
+                      return Math.abs(page - currentStorePage) <= 1 || page === 1 || page === totalStorePages;
+                    })
+                    .map((page, idx, arr) => {
+                      const prevPage = arr[idx - 1];
+                      const isGap = prevPage && page - prevPage > 1;
+                      return (
+                        <div key={page} className="flex items-center gap-1">
+                          {isGap && <span className="text-xs text-slate-400 px-1">...</span>}
+                          <button
+                            type="button"
+                            onClick={() => setStorePage(page)}
+                            className={`min-w-[32px] h-8 px-2 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
+                              currentStorePage === page
+                                ? 'bg-indigo-600 text-white shadow-xs'
+                                : 'text-slate-600 hover:bg-slate-100 border border-slate-200/80'
+                            }`}
+                          >
+                            {page}
+                          </button>
+                        </div>
+                      );
+                    })}
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setStorePage((prev) => Math.min(totalStorePages, prev + 1))}
+                  disabled={currentStorePage >= totalStorePages}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Halaman Berikutnya"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStorePage(totalStorePages)}
+                  disabled={currentStorePage >= totalStorePages}
+                  className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-40 disabled:pointer-events-none transition-colors"
+                  title="Halaman Terakhir"
+                >
+                  <ChevronsRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
+

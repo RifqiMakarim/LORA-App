@@ -249,20 +249,30 @@ export async function GET(request: Request) {
     const dailyStockRecommendations = generateDailyStockRecommendations(forecastPoints, filledSeries, localEvents);
 
     // =========================================================================
-    // 7. Auto Insight + Gemini AI Narrative
+    // 7. Auto Insight + Caching Check
     // =========================================================================
     const autoInsight = generateAutoInsight(filledSeries, forecastPoints, horizonParam);
-    const aiNarrative = await generateAiStrategicNarrative(
-      totalProjectedRevenue,
-      growth,
-      busySummary,
-      quietSummary,
-      localEvents,
-      isFallbackMode
-    );
+    
+    // Cek apakah sudah ada narasi AI tersimpan di cache database untuk hari ini
+    let cachedAiNarrative: string | null = null;
+    const todayStr = new Date().toISOString().split('T')[0];
+    if (businessId) {
+      const { data: cachedForecast } = await supabase
+        .from('sales_forecasts')
+        .select('ai_qualitative_note')
+        .eq('business_id', businessId)
+        .eq('forecast_date', todayStr)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (cachedForecast?.ai_qualitative_note) {
+        cachedAiNarrative = cachedForecast.ai_qualitative_note;
+      }
+    }
 
     // =========================================================================
-    // 8. Response Final
+    // 8. Response Final (Instan < 150ms)
     // =========================================================================
     const response: SalesForecastResult = {
       horizon: horizonParam,
@@ -282,7 +292,7 @@ export async function GET(request: Request) {
       quiet_summary: quietSummary,
       daily_stock_recommendations: dailyStockRecommendations,
       auto_insight: autoInsight,
-      ai_qualitative_note: aiNarrative,
+      ai_qualitative_note: cachedAiNarrative,
     };
 
     return NextResponse.json(response);

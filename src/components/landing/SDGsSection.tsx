@@ -45,7 +45,7 @@ export default function SDGsSection() {
             <FadeContent direction="up" distance={20} duration={600} blur>
                 <div className="text-center space-y-3 max-w-3xl mx-auto">
                     <h2 className="text-2xl sm:text-4xl font-outfit font-black tracking-tight text-slate-900">
-                        Dukungan Nyata untuk Tujuan Pembangunan Berkelanjutan (SDGs)
+                        Dukungan Nyata untuk <i>Sustainable Development Goals</i> (SDGs)
                     </h2>
 
                     <p className="text-slate-600 text-xs sm:text-sm leading-relaxed max-w-2xl mx-auto">

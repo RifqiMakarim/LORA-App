@@ -87,7 +87,8 @@ export default function AiAssistantShowcaseSection() {
                     </div>
 
                     <h2 className="text-2xl sm:text-4xl font-outfit font-black tracking-tight text-slate-900">
-                        Asisten Bisnis Cerdas untuk Kemajuan Usaha Anda
+                        Asisten Bisnis Cerdas untuk
+                        <br />Kemajuan Usaha Anda
                     </h2>
 
                     <p className="text-slate-600 text-xs sm:text-sm sm:text-base leading-relaxed max-w-2xl mx-auto">
