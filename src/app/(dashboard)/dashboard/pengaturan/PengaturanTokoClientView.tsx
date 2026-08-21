@@ -572,7 +572,7 @@ export default function PengaturanTokoClientView({ business }: PengaturanTokoCli
                             <ImageUpload
                                 value={qrisImageUrl}
                                 label="Gambar Kode QRIS Toko"
-                                helperText="Pindai QRIS cepat untuk pembeli di kasir"
+                                helperText="Unggah gambar/poster resmi QRIS toko (format persegi maupun ber-border). Otomatis disesuaikan di checkout."
                                 aspectRatio="square"
                                 onConfirm={(url) => setQrisImageUrl(url)}
                                 onRemove={() => setQrisImageUrl('')}

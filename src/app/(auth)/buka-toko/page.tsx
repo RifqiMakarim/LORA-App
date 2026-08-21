@@ -639,7 +639,7 @@ export default function BukaTokoPage() {
                                                 <img
                                                     src={qrisPreviewUrl || qrisImageUrl}
                                                     alt="Preview QRIS Toko"
-                                                    className="w-32 h-32 object-contain bg-white p-2 border border-slate-200 rounded-lg shadow-sm"
+                                                    className="w-36 h-auto min-h-[120px] max-h-[180px] object-contain bg-white p-2 border border-slate-200 rounded-xl shadow-xs"
                                                 />
                                                 <div className="space-y-2 text-center sm:text-left">
                                                     <p className="text-xs font-semibold text-emerald-600 flex items-center gap-1.5 justify-center sm:justify-start">
@@ -677,10 +677,10 @@ export default function BukaTokoPage() {
                                                         <UploadCloud className="w-6 h-6" />
                                                     </div>
                                                     <p className="text-xs font-bold text-slate-800">
-                                                        Klik untuk Unggah Gambar QRIS Toko
+                                                        Klik untuk Unggah Gambar / Poster QRIS Toko
                                                     </p>
                                                     <p className="text-[11px] text-slate-400 mt-0.5">
-                                                        Format JPG, PNG, atau WEBP (Maksimal 5MB)
+                                                        Format JPG, PNG, atau WEBP (Mendukung poster QRIS ber-border resmi)
                                                     </p>
                                                 </label>
                                             </div>
