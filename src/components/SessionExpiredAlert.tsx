@@ -23,6 +23,24 @@ function SessionExpiredAlertContent() {
                     popup: 'rounded-3xl font-sans',
                     confirmButton: 'rounded-xl text-xs font-bold px-5 py-2.5',
                 },
+                willClose: () => {
+                    if (typeof document !== 'undefined') {
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                        document.documentElement.style.overflow = '';
+                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                        document.documentElement.classList.remove('swal2-shown', 'swal2-height-auto');
+                    }
+                },
+                didClose: () => {
+                    if (typeof document !== 'undefined') {
+                        document.body.style.overflow = '';
+                        document.body.style.paddingRight = '';
+                        document.documentElement.style.overflow = '';
+                        document.body.classList.remove('swal2-shown', 'swal2-height-auto');
+                        document.documentElement.classList.remove('swal2-shown', 'swal2-height-auto');
+                    }
+                },
             }).then(() => {
                 // Bersihkan parameter query ?alert=session_expired dari URL agar tidak muncul terus-menerus saat refresh
                 const params = new URLSearchParams(searchParams.toString());

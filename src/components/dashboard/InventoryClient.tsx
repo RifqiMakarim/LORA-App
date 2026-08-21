@@ -79,6 +79,24 @@ export default function InventoryClient({
   const [editingCategoryIndex, setEditingCategoryIndex] = useState<number | null>(null);
   const [editingCategoryName, setEditingCategoryName] = useState('');
 
+  // Pastikan scroll body & html selalu di-unlock saat modal ditutup atau saat unmount
+  useEffect(() => {
+    if (!isModalOpen && !isCategoriesModalOpen) {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.documentElement.style.overflow = '';
+      }
+    }
+    return () => {
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = '';
+        document.body.style.paddingRight = '';
+        document.documentElement.style.overflow = '';
+      }
+    };
+  }, [isModalOpen, isCategoriesModalOpen]);
+
   // Load data kategori dari database saat komponen dimuat
   useEffect(() => {
     const fetchCategories = async () => {
