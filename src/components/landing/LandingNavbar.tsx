@@ -52,7 +52,7 @@ export default function LandingNavbar({ user, profile }: LandingNavbarProps) {
     // Observer to highlight active navigation link based on scroll
     useEffect(() => {
         const handleScroll = () => {
-            const sections = ['solusi', 'sdgs', 'faq'];
+            const sections = ['solusi', 'faq'];
             const scrollPosition = window.scrollY + 120;
 
             for (const sectionId of sections) {
@@ -309,36 +309,25 @@ export default function LandingNavbar({ user, profile }: LandingNavbarProps) {
                         <a
                             href="#solusi"
                             onClick={(e) => handleSmoothScroll(e, '#solusi')}
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                            className="block px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                         >
-                            <span>Solusi & Fitur LORA</span>
-                            <Sparkles className="w-4 h-4 text-amber-500" />
+                            Solusi & Fitur
                         </a>
 
                         <Link
                             href="/katalog"
                             onClick={() => setIsMobileMenuOpen(false)}
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                            className="block px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                         >
-                            <span>Katalog Produk UMKM</span>
-                            <ShoppingBag className="w-4 h-4 text-terracotta" />
+                            Katalog Produk
                         </Link>
-
-                        <a
-                            href="#sdgs"
-                            onClick={(e) => handleSmoothScroll(e, '#sdgs')}
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100"
-                        >
-                            <span>Dukungan SDGs</span>
-                            <span className="text-[10px] font-bold px-2 py-0.5 bg-amber-100 text-amber-800 rounded-full">8,9,10,12</span>
-                        </a>
 
                         <a
                             href="#faq"
                             onClick={(e) => handleSmoothScroll(e, '#faq')}
-                            className="flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:bg-slate-100"
+                            className="block px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition-colors"
                         >
-                            <span>FAQ (Tanya Jawab)</span>
+                            FAQ
                         </a>
                     </div>
 
