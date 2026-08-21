@@ -23,6 +23,7 @@ import {
 import toast from 'react-hot-toast';
 import Swal from 'sweetalert2';
 import { cancelOrder } from '@/app/actions/order';
+import Pagination from '@/components/ui/Pagination';
 
 interface OrderItem {
     id: string;
@@ -71,6 +72,19 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
     // Filter & Search Local State
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+
+    const ITEMS_PER_PAGE = 8;
+
+    const handleSearchChange = (query: string) => {
+        setSearchQuery(query);
+        setCurrentPage(1);
+    };
+
+    const handleStatusFilterChange = (status: string) => {
+        setSelectedStatusFilter(status);
+        setCurrentPage(1);
+    };
 
     const handleCopy = (text: string) => {
         navigator.clipboard.writeText(text);
@@ -180,6 +194,12 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
         return true;
     });
 
+    const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE) || 1;
+    const paginatedOrders = filteredOrders.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-16 pt-6">
             <div className="max-w-3xl mx-auto px-4 sm:px-6 space-y-6">
@@ -215,14 +235,14 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
                             <input
                                 type="text"
                                 value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
+                                onChange={(e) => handleSearchChange(e.target.value)}
                                 placeholder="Cari toko, nama produk, atau ID pesanan..."
                                 className="w-full pl-10 pr-9 py-2.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-terracotta/40 focus:bg-white transition-all font-medium"
                             />
                             {searchQuery && (
                                 <button
                                     type="button"
-                                    onClick={() => setSearchQuery('')}
+                                    onClick={() => handleSearchChange('')}
                                     className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 p-0.5 rounded-full hover:bg-slate-200 cursor-pointer"
                                 >
                                     <X className="w-3.5 h-3.5" />
@@ -238,7 +258,7 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
                                     <button
                                         key={tab.value}
                                         type="button"
-                                        onClick={() => setSelectedStatusFilter(tab.value)}
+                                        onClick={() => handleStatusFilterChange(tab.value)}
                                         className={`px-3.5 py-1.5 rounded-xl whitespace-nowrap transition-all cursor-pointer flex items-center gap-1.5 ${
                                             isActive
                                                 ? 'bg-slate-900 text-white shadow-sm'
@@ -308,7 +328,7 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
                 ) : (
                     /* Mapping List Card Pesanan */
                     <div className="space-y-4">
-                        {filteredOrders.map((order) => {
+                        {paginatedOrders.map((order) => {
                             const storeName = order.businesses?.name || 'Toko UMKM';
                             const formattedDate = new Date(order.created_at).toLocaleString('id-ID', {
                                 dateStyle: 'medium',
@@ -383,17 +403,19 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
                                         {order.order_items && order.order_items.length > 0 ? (
                                             order.order_items.map((item) => (
                                                 <div key={item.id} className="flex items-center justify-between text-xs font-medium">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="w-5 h-5 bg-slate-100 border border-slate-200 text-slate-700 font-bold rounded-md flex items-center justify-center text-[10px]">
-                                                            {item.quantity}x
-                                                        </span>
-                                                        <span className="text-slate-800 font-bold">
+                                                    <div className="flex-1 min-w-0">
+                                                        <h4 className="text-xs sm:text-sm font-bold text-slate-900 truncate">
                                                             {item.products?.name || 'Produk UMKM'}
+                                                        </h4>
+                                                        <p className="text-[11px] text-slate-500">
+                                                            {item.quantity} x Rp {item.price_per_item.toLocaleString('id-ID')}
+                                                        </p>
+                                                    </div>
+                                                    <div className="text-right flex-shrink-0">
+                                                        <span className="text-xs sm:text-sm font-black text-slate-900">
+                                                            Rp {(item.quantity * item.price_per_item).toLocaleString('id-ID')}
                                                         </span>
                                                     </div>
-                                                    <span className="text-slate-600 font-semibold">
-                                                        Rp {(item.quantity * item.price_per_item).toLocaleString('id-ID')}
-                                                    </span>
                                                 </div>
                                             ))
                                         ) : (
@@ -401,22 +423,23 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
                                         )}
                                     </div>
 
-                                    {/* Footer Card: Total, Payment Method, & Action Buttons */}
-                                    <div className="pt-3 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                        <div className="flex items-center gap-2 text-xs">
-                                            <CreditCard className="w-4 h-4 text-amber-700" />
-                                            <span className="text-slate-500 font-medium">Metode:</span>
-                                            <span className="font-bold text-slate-900 uppercase bg-amber-50 border border-amber-200/80 px-2 py-0.5 rounded-lg text-[11px]">
-                                                {order.payment_method}
+                                    {/* Footer Kartu: Tanggal + Total Belanja + Tombol Aksi */}
+                                    <div className="border-t border-slate-100 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        <div className="flex items-center gap-1.5 text-[11px] text-slate-400">
+                                            <Clock className="w-3.5 h-3.5" />
+                                            <span>
+                                                {new Date(order.created_at).toLocaleString('id-ID', {
+                                                    dateStyle: 'medium',
+                                                    timeStyle: 'short',
+                                                })}
                                             </span>
                                         </div>
 
-                                        <div className="flex items-center justify-between sm:justify-end gap-3 flex-wrap">
-                                            <div className="text-right">
-                                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider block">
-                                                    Total Harga
-                                                </span>
-                                                <span className="text-base sm:text-lg font-outfit font-black text-slate-900">
+                                        <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                                            {/* Total Belanja */}
+                                            <div className="text-left sm:text-right">
+                                                <span className="text-[10px] text-slate-400 block font-bold uppercase tracking-wider">Total Pesanan</span>
+                                                <span className="text-sm sm:text-base font-black text-terracotta">
                                                     Rp {order.total_amount.toLocaleString('id-ID')}
                                                 </span>
                                             </div>
@@ -453,6 +476,23 @@ export default function UserOrdersClientView({ orders }: UserOrdersClientViewPro
                                 </div>
                             );
                         })}
+
+                        {/* Komponen Paginasi */}
+                        {totalPages > 1 && (
+                            <div className="bg-white rounded-3xl p-4 border border-slate-200/90 shadow-sm mt-4">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    totalItems={filteredOrders.length}
+                                    itemsPerPage={ITEMS_PER_PAGE}
+                                    onPageChange={(page) => {
+                                        setCurrentPage(page);
+                                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                                    }}
+                                    itemLabel="pesanan"
+                                />
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

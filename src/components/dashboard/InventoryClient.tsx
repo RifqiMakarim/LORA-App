@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import toast, { Toaster } from 'react-hot-toast';
 import ImageUpload from '@/components/ImageUpload';
+import Pagination from '@/components/ui/Pagination';
 
 interface Product {
   id: string;
@@ -50,6 +51,14 @@ export default function InventoryClient({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+
+  const ITEMS_PER_PAGE = 10;
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategory, selectedStatus]);
 
   // Modal Form State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -177,6 +186,14 @@ export default function InventoryClient({
       return matchesSearch && matchesCategory && matchesStatus;
     });
   }, [classifiedProducts, searchQuery, selectedCategory, selectedStatus]);
+
+  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1;
+  const paginatedProducts = useMemo(() => {
+    return filteredProducts.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+    );
+  }, [filteredProducts, currentPage, ITEMS_PER_PAGE]);
 
   // Handle Buka Modal Tambah
   const handleOpenAdd = () => {
@@ -526,8 +543,8 @@ export default function InventoryClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 font-semibold text-slate-700">
-              {filteredProducts.length > 0 ? (
-                filteredProducts.map((p) => (
+              {paginatedProducts.length > 0 ? (
+                paginatedProducts.map((p) => (
                   <tr key={p.id} className={`hover:bg-slate-50/50 ${!p.is_active ? 'opacity-50 bg-slate-50/20' : ''}`}>
                     <td className="p-3">
                       <div className="flex items-center gap-3">
@@ -607,6 +624,20 @@ export default function InventoryClient({
             </tbody>
           </table>
         </div>
+
+        {/* Komponen Paginasi Stok */}
+        {totalPages > 1 && (
+          <div className="pt-3 border-t border-slate-100">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={filteredProducts.length}
+              itemsPerPage={ITEMS_PER_PAGE}
+              onPageChange={(page) => setCurrentPage(page)}
+              itemLabel="produk"
+            />
+          </div>
+        )}
       </div>
 
       {/* CRUD Add/Edit Product Modal */}

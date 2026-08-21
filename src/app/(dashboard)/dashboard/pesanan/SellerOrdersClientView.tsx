@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { rejectOrder } from '@/app/actions/order';
+import Pagination from '@/components/ui/Pagination';
 
 interface OrderItem {
     id: string;
@@ -77,6 +78,20 @@ export default function SellerOrdersClientView({
     const [updatingId, setUpdatingId] = useState<string | null>(null);
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [searchQuery, setSearchQuery] = useState<string>('');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+
+    const ITEMS_PER_PAGE = 8;
+
+    // Reset pagination saat filter status atau pencarian berubah
+    const handleFilterChange = (status: string) => {
+        setFilterStatus(status);
+        setCurrentPage(1);
+    };
+
+    const handleSearchChange = (query: string) => {
+        setSearchQuery(query);
+        setCurrentPage(1);
+    };
 
     // State untuk Modal Tolak Pesanan Kustom
     const [selectedOrderToReject, setSelectedOrderToReject] = useState<OrderData | null>(null);
@@ -154,6 +169,12 @@ export default function SellerOrdersClientView({
         return matchesStatus && (shortIdMatch || buyerNameMatch || idMatch);
     });
 
+    const totalPages = Math.ceil(filteredOrders.length / ITEMS_PER_PAGE) || 1;
+    const paginatedOrders = filteredOrders.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
+
     return (
         <div className="space-y-6 pb-12">
             {/* Header & Filter Controls */}
@@ -189,7 +210,7 @@ export default function SellerOrdersClientView({
                             type="text"
                             placeholder="Cari ID pesanan / pembeli..."
                             value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
+                            onChange={(e) => handleSearchChange(e.target.value)}
                             className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-2xl text-xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-terracotta/30"
                         />
                     </div>
@@ -207,12 +228,12 @@ export default function SellerOrdersClientView({
                         ].map((tab) => (
                             <button
                                 key={tab.key}
-                                onClick={() => setFilterStatus(tab.key)}
+                                onClick={() => handleFilterChange(tab.key)}
                                 className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer ${
                                     filterStatus === tab.key
                                         ? 'bg-terracotta text-white shadow-md shadow-terracotta/20'
                                         : 'bg-slate-100 text-slate-600 hover:bg-slate-200/80'
-                                }}`}
+                                }`}
                             >
                                 {tab.label}
                             </button>
@@ -234,7 +255,7 @@ export default function SellerOrdersClientView({
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {filteredOrders.map((order) => {
+                    {paginatedOrders.map((order) => {
                         const isHighlighted = order.id === highlight;
                         const buyerName = order.profiles?.full_name || 'Pembeli';
                         const buyerPhoneRaw = order.profiles?.phone_number || '';
@@ -469,6 +490,23 @@ export default function SellerOrdersClientView({
                             </div>
                         );
                     })}
+
+                    {/* Komponen Paginasi Pesanan */}
+                    {totalPages > 1 && (
+                        <div className="bg-white rounded-3xl p-4 border border-slate-200/80 shadow-sm mt-4">
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                totalItems={filteredOrders.length}
+                                itemsPerPage={ITEMS_PER_PAGE}
+                                onPageChange={(page) => {
+                                    setCurrentPage(page);
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                }}
+                                itemLabel="pesanan"
+                            />
+                        </div>
+                    )}
                 </div>
             )}
 

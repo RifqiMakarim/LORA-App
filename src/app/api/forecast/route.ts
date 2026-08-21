@@ -190,8 +190,9 @@ export async function GET(request: Request) {
       const predictedSales = Math.round(Math.max(val, 0));
       const predictedOrders = Math.max(1, Math.round(orderPredictions[i] || (predictedSales > 0 ? Math.round(predictedSales / 150000) : 0)));
 
-      // Confidence band berdasarkan MAPE
-      const errorMargin = Math.max(mapeValidated / 100, 0.12);
+      // Confidence band berdasarkan MAPE (dibatasi 12% - 30% agar realistis dan Recharts scaling tetap rapi)
+      const boundedMape = Math.min(Math.max(mapeValidated, 12.0), 30.0);
+      const errorMargin = boundedMape / 100;
       const lower = Math.round(predictedSales * (1 - errorMargin));
       const upper = Math.round(predictedSales * (1 + errorMargin));
 

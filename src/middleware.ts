@@ -38,16 +38,30 @@ export async function updateSession(request: NextRequest) {
     const pathname = request.nextUrl.pathname;
 
     // 1. ATURAN MUTLAK GUEST ROUTES ( / , /login , /register ):
-    // Middleware HANYA me-redirect user yang sudah login jika mereka mengakses rute tamu ini ke /katalog.
-    // DILARANG me-redirect user jika berada di rute publik seperti /katalog atau /toko/[slug] (penjual bebas lihat katalog publik).
+    // Middleware HANYA me-redirect user yang sudah login jika mereka mengakses rute tamu ini.
+    // Super Admin -> /admin, User biasa -> /katalog.
     const isGuestOnlyRoute = pathname === '/' || pathname === '/login' || pathname === '/register';
     if (user && isGuestOnlyRoute) {
         const url = request.nextUrl.clone();
-        url.pathname = '/katalog';
+        if (user.email === 'admin@lora.id') {
+            url.pathname = '/admin';
+        } else {
+            url.pathname = '/katalog';
+        }
         return NextResponse.redirect(url);
     }
 
-    // 2. ATURAN PROTEKSI RUTE MEMBER/SELLER:
+    // 2. ATURAN PROTEKSI RUTE ADMIN:
+    if (pathname.startsWith('/admin')) {
+        if (!user) {
+            const url = request.nextUrl.clone();
+            url.pathname = '/login';
+            url.searchParams.set('alert', 'admin_required');
+            return NextResponse.redirect(url);
+        }
+    }
+
+    // 3. ATURAN PROTEKSI RUTE MEMBER/SELLER:
     // Jika belum login dan mencoba mengakses rute terproteksi, arahkan ke /login
     const isProtectedRoute =
         pathname.startsWith('/dashboard') ||

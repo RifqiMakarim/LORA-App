@@ -68,6 +68,18 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
         };
     }, []);
 
+    // Handler Logout yang aman dengan pembersihan keranjang
+    const handleLogout = async () => {
+        setIsProfileOpen(false);
+        setIsMobileMenuOpen(false);
+        clearCart();
+        try {
+            await logout();
+        } catch {
+            window.location.href = '/login';
+        }
+    };
+
     // Handler Submit Pencarian Global Header
     const handleSearchSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -256,15 +268,14 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
                                         <span>Pengaturan Akun</span>
                                     </Link>
 
-                                    <form action={logout} onSubmit={() => clearCart()}>
-                                        <button
-                                            type="submit"
-                                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer text-left"
-                                        >
-                                            <LogOut className="w-3.5 h-3.5 text-rose-500" />
-                                            <span>Keluar (Logout)</span>
-                                        </button>
-                                    </form>
+                                    <button
+                                        type="button"
+                                        onClick={handleLogout}
+                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer text-left"
+                                    >
+                                        <LogOut className="w-3.5 h-3.5 text-rose-500" />
+                                        <span>Keluar (Logout)</span>
+                                    </button>
                                 </div>
                             )}
                         </div>
@@ -414,15 +425,14 @@ export default function StorefrontNavbar({ user, profile }: StorefrontNavbarProp
                                     <span>Pengaturan Akun</span>
                                 </Link>
 
-                                <form action={logout} onSubmit={() => clearCart()}>
-                                    <button
-                                        type="submit"
-                                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl text-left"
-                                    >
-                                        <LogOut className="w-4 h-4 text-rose-500" />
-                                        <span>Keluar (Logout)</span>
-                                    </button>
-                                </form>
+                                <button
+                                    type="button"
+                                    onClick={handleLogout}
+                                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl text-left cursor-pointer"
+                                >
+                                    <LogOut className="w-4 h-4 text-rose-500" />
+                                    <span>Keluar (Logout)</span>
+                                </button>
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 gap-2 pt-1">

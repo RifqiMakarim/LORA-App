@@ -33,6 +33,7 @@ import {
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import toast from 'react-hot-toast';
 import { RFMAnalyticsSummary, CustomerRFMProfile, RFMSegment } from '@/lib/engines/rfm-engine';
+import Pagination from '@/components/ui/Pagination';
 
 const SEGMENT_COLORS: Record<RFMSegment, string> = {
   'Champions': '#10B981',       // Emerald
@@ -92,6 +93,7 @@ export default function CustomerInsightsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSegment, setSelectedSegment] = useState<string>('ALL');
+  const [customerPage, setCustomerPage] = useState<number>(1);
 
   // Interactive Segment Modal (dari klik Donut Chart)
   const [activeSegmentDetail, setActiveSegmentDetail] = useState<RFMSegment | null>(null);
@@ -106,6 +108,7 @@ export default function CustomerInsightsPage() {
   // Dedicated Voucher Section State
   const [storeVouchers, setStoreVouchers] = useState<StoreVoucher[]>([]);
   const [loadingVouchers, setLoadingVouchers] = useState(false);
+  const [voucherPage, setVoucherPage] = useState<number>(1);
   const [newVoucherCode, setNewVoucherCode] = useState('');
   const [newVoucherDiscountType, setNewVoucherDiscountType] = useState<'percent' | 'fixed'>('percent');
   const [newVoucherDiscountValue, setNewVoucherDiscountValue] = useState<number>(15);
@@ -117,6 +120,17 @@ export default function CustomerInsightsPage() {
   const [newVoucherUsageLimit, setNewVoucherUsageLimit] = useState<number>(50);
   const [isSavingVoucher, setIsSavingVoucher] = useState(false);
   const [copiedVoucherCode, setCopiedVoucherCode] = useState<string | null>(null);
+
+  // Reset customer page saat filter segmen atau pencarian berubah
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    setCustomerPage(1);
+  };
+
+  const handleSegmentChange = (seg: string) => {
+    setSelectedSegment(seg);
+    setCustomerPage(1);
+  };
 
   // Fetch RFM Customer Data
   useEffect(() => {
@@ -143,6 +157,7 @@ export default function CustomerInsightsPage() {
       const json = await res.json();
       if (json.vouchers) {
         setStoreVouchers(json.vouchers);
+        setVoucherPage(1);
       }
     } catch (err) {
       console.error('Failed to load store vouchers:', err);
@@ -293,6 +308,20 @@ export default function CustomerInsightsPage() {
     const matchesSegment = selectedSegment === 'ALL' || c.segment === selectedSegment;
     return matchesSearch && matchesSegment;
   });
+
+  const CUSTOMERS_PER_PAGE = 10;
+  const customerTotalPages = Math.ceil(filteredCustomers.length / CUSTOMERS_PER_PAGE) || 1;
+  const paginatedCustomers = filteredCustomers.slice(
+    (customerPage - 1) * CUSTOMERS_PER_PAGE,
+    customerPage * CUSTOMERS_PER_PAGE
+  );
+
+  const VOUCHERS_PER_PAGE = 6;
+  const voucherTotalPages = Math.ceil(storeVouchers.length / VOUCHERS_PER_PAGE) || 1;
+  const paginatedVouchers = storeVouchers.slice(
+    (voucherPage - 1) * VOUCHERS_PER_PAGE,
+    voucherPage * VOUCHERS_PER_PAGE
+  );
 
   // Data Recharts Donut
   const chartData = data ? Object.entries(data.segment_distribution).map(([name, value]) => ({
@@ -544,7 +573,7 @@ export default function CustomerInsightsPage() {
             </h2>
             {selectedSegment !== 'ALL' && (
               <button 
-                onClick={() => setSelectedSegment('ALL')}
+                onClick={() => handleSegmentChange('ALL')}
                 className="text-xs text-amber-600 underline font-semibold cursor-pointer"
               >
                 Reset Filter ({selectedSegment})
@@ -560,7 +589,7 @@ export default function CustomerInsightsPage() {
                 type="text"
                 placeholder="Cari nama atau telepon..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/40"
               />
             </div>
@@ -570,7 +599,7 @@ export default function CustomerInsightsPage() {
               <Filter className="w-4 h-4 text-slate-400" />
               <select
                 value={selectedSegment}
-                onChange={(e) => setSelectedSegment(e.target.value)}
+                onChange={(e) => handleSegmentChange(e.target.value)}
                 className="py-2 px-3 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/40 cursor-pointer"
               >
                 <option value="ALL">Semua Segmen</option>
@@ -606,7 +635,7 @@ export default function CustomerInsightsPage() {
                   </td>
                 </tr>
               ) : (
-                filteredCustomers.map((cust) => {
+                paginatedCustomers.map((cust) => {
                   const badge = SEGMENT_BADGES[cust.segment];
                   const Icon = badge.icon;
                   const hasPhone = !!cust.phone_number && cust.phone_number.trim().length > 0;
@@ -709,6 +738,20 @@ export default function CustomerInsightsPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Komponen Paginasi Profil Pelanggan */}
+        {customerTotalPages > 1 && (
+          <div className="px-6 py-3 border-t border-slate-100 bg-slate-50/50">
+            <Pagination
+              currentPage={customerPage}
+              totalPages={customerTotalPages}
+              totalItems={filteredCustomers.length}
+              itemsPerPage={CUSTOMERS_PER_PAGE}
+              onPageChange={(p) => setCustomerPage(p)}
+              itemLabel="pelanggan"
+            />
+          </div>
+        )}
       </div>
 
       {/* 5. Section Terdedikasi: Manajemen & Generator Voucher Toko (Di Bawah Tabel) */}
@@ -921,63 +964,79 @@ export default function CustomerInsightsPage() {
                 <p className="text-[11px] text-slate-400">Gunakan formulir di samping untuk membuat kupon promosi pertama Anda.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 max-h-[460px] overflow-y-auto pr-1">
-                {storeVouchers.map((vouch) => {
-                  const isCopied = copiedVoucherCode === vouch.code;
-                  return (
-                    <div
-                      key={vouch.id}
-                      className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-amber-300 hover:shadow-xs transition-all space-y-3 relative group"
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <span className="font-mono font-extrabold text-sm text-slate-900 tracking-wider">
-                            {vouch.code}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              navigator.clipboard.writeText(vouch.code);
-                              setCopiedVoucherCode(vouch.code);
-                              toast.success(`Kode ${vouch.code} disalin!`);
-                              setTimeout(() => setCopiedVoucherCode(null), 2000);
-                            }}
-                            className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
-                            title="Salin Kode Kupon"
-                          >
-                            {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                          </button>
-                        </div>
-                        <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
-                          {vouch.discount_type === 'percent' ? `Diskon ${vouch.discount_value}%` : `Hemat Rp ${vouch.discount_value.toLocaleString('id-ID')}`}
-                        </span>
-                      </div>
-
-                      <div className="space-y-1 text-[11px] text-slate-500 border-t border-slate-100 pt-2">
-                        {vouch.target_segment && (
-                          <div className="flex items-center justify-between">
-                            <span>Target:</span>
-                            <span className="font-semibold text-slate-700">{vouch.target_segment}</span>
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  {paginatedVouchers.map((vouch) => {
+                    const isCopied = copiedVoucherCode === vouch.code;
+                    return (
+                      <div
+                        key={vouch.id}
+                        className="p-4 bg-white rounded-2xl border border-slate-200/90 shadow-2xs hover:border-amber-300 hover:shadow-xs transition-all space-y-3 relative group"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono font-extrabold text-sm text-slate-900 tracking-wider">
+                              {vouch.code}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(vouch.code);
+                                setCopiedVoucherCode(vouch.code);
+                                toast.success(`Kode ${vouch.code} disalin!`);
+                                setTimeout(() => setCopiedVoucherCode(null), 2000);
+                              }}
+                              className="p-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors cursor-pointer"
+                              title="Salin Kode Kupon"
+                            >
+                              {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                            </button>
                           </div>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <span>Masa Berlaku:</span>
-                          <span className="font-mono text-slate-700">
-                            {vouch.expires_at ? new Date(vouch.expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'Selamanya'}
+                          <span className="text-[11px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            {vouch.discount_type === 'percent' ? `Diskon ${vouch.discount_value}%` : `Hemat Rp ${vouch.discount_value.toLocaleString('id-ID')}`}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between">
-                          <span>Min. Belanja:</span>
-                          <span className="font-semibold text-slate-700">{formatIDR(vouch.min_order_amount || 0)}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span>Pemakaian:</span>
-                          <span className="font-semibold text-amber-700">{vouch.times_used || 0} / {vouch.usage_limit} Kuota</span>
+
+                        <div className="space-y-1 text-[11px] text-slate-500 border-t border-slate-100 pt-2">
+                          {vouch.target_segment && (
+                            <div className="flex items-center justify-between">
+                              <span>Target:</span>
+                              <span className="font-semibold text-slate-700">{vouch.target_segment}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between">
+                            <span>Masa Berlaku:</span>
+                            <span className="font-mono text-slate-700">
+                              {vouch.expires_at ? new Date(vouch.expires_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }) : 'Selamanya'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Min. Belanja:</span>
+                            <span className="font-semibold text-slate-700">{formatIDR(vouch.min_order_amount || 0)}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Pemakaian:</span>
+                            <span className="font-semibold text-amber-700">{vouch.times_used || 0} / {vouch.usage_limit} Kuota</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
+
+                {/* Komponen Paginasi Voucher */}
+                {voucherTotalPages > 1 && (
+                  <div className="pt-3 border-t border-slate-100">
+                    <Pagination
+                      currentPage={voucherPage}
+                      totalPages={voucherTotalPages}
+                      totalItems={storeVouchers.length}
+                      itemsPerPage={VOUCHERS_PER_PAGE}
+                      onPageChange={(p) => setVoucherPage(p)}
+                      itemLabel="voucher"
+                    />
+                  </div>
+                )}
               </div>
             )}
           </div>

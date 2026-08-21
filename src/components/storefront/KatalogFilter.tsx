@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
 import {
@@ -9,6 +9,8 @@ import {
     RotateCcw,
     MapPin,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Check,
     LayoutGrid,
     Shirt,
@@ -51,6 +53,34 @@ export default function KatalogFilter({ categories = [], availableCities = [] }:
 
     const [searchInputValue, setSearchInputValue] = useState(initialQuery);
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+    // Carousel Ref & Scroll Tracking
+    const scrollContainerRef = useRef<HTMLDivElement>(null);
+    const [canScrollLeft, setCanScrollLeft] = useState(false);
+    const [canScrollRight, setCanScrollRight] = useState(false);
+
+    const checkScrollable = () => {
+        const el = scrollContainerRef.current;
+        if (el) {
+            setCanScrollLeft(el.scrollLeft > 10);
+            setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 10);
+        }
+    };
+
+    useEffect(() => {
+        checkScrollable();
+        window.addEventListener('resize', checkScrollable);
+        return () => window.removeEventListener('resize', checkScrollable);
+    }, []);
+
+    const handleScroll = (direction: 'left' | 'right') => {
+        const el = scrollContainerRef.current;
+        if (el) {
+            const scrollAmount = direction === 'left' ? -280 : 280;
+            el.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+            setTimeout(checkScrollable, 300);
+        }
+    };
 
     // 1 & 2. State & Fetch Kategori Dinamis dari Supabase (Tabel product_categories)
     const [dynamicCategories, setDynamicCategories] = useState<string[]>(() => {
@@ -316,28 +346,63 @@ export default function KatalogFilter({ categories = [], availableCities = [] }:
                 </div>
             </div>
 
-            {/* Container Pill Chips Kategori: Langsung di bawah Search & Location Filter Bar */}
-            <div className="flex overflow-x-auto flex-nowrap sm:flex-wrap sm:justify-center gap-2 sm:gap-2.5 pb-2 sm:pb-0 pt-1 hide-scrollbar snap-x">
-                {dynamicCategories.map((cat) => {
-                    const isActive =
-                        cat === currentCategory ||
-                        (cat === 'Semua Produk' && (!currentCategory || currentCategory === 'Semua Produk'));
-
-                    return (
+            {/* Container Single-Row Horizontal Carousel Kategori dengan Tombol Melayang & Edge Fade */}
+            <div className="relative group/carousel">
+                {/* Tombol Navigasi Kiri */}
+                {canScrollLeft && (
+                    <div className="absolute left-0 top-0 bottom-0 z-10 flex items-center pr-6 bg-gradient-to-r from-slate-50 via-slate-50/90 to-transparent">
                         <button
-                            key={cat}
                             type="button"
-                            onClick={() => handleCategoryClick(cat)}
-                            className={`px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center justify-center flex-shrink-0 cursor-pointer snap-start group ${
-                                isActive
-                                    ? 'bg-terracotta text-white border border-terracotta shadow-md shadow-terracotta/25 font-semibold scale-102'
-                                    : 'border border-slate-200 bg-white text-slate-700 hover:border-terracotta hover:text-terracotta hover:bg-orange-50/70 shadow-2xs'
-                            }`}
+                            onClick={() => handleScroll('left')}
+                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 backdrop-blur-xs border border-slate-200/90 shadow-md text-slate-700 hover:text-terracotta hover:border-terracotta hover:scale-105 active:scale-95 flex items-center justify-center transition-all cursor-pointer"
+                            aria-label="Scroll Kategori ke Kiri"
                         >
-                            <span>{cat}</span>
+                            <ChevronLeft className="w-4 h-4" />
                         </button>
-                    );
-                })}
+                    </div>
+                )}
+
+                {/* Slider List Kategori */}
+                <div
+                    ref={scrollContainerRef}
+                    onScroll={checkScrollable}
+                    className="flex overflow-x-auto whitespace-nowrap gap-2 sm:gap-2.5 py-1 px-1 scroll-smooth hide-scrollbar snap-x"
+                >
+                    {dynamicCategories.map((cat) => {
+                        const isActive =
+                            cat === currentCategory ||
+                            (cat === 'Semua Produk' && (!currentCategory || currentCategory === 'Semua Produk'));
+
+                        return (
+                            <button
+                                key={cat}
+                                type="button"
+                                onClick={() => handleCategoryClick(cat)}
+                                className={`px-4 sm:px-5 py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center justify-center flex-shrink-0 cursor-pointer snap-start ${
+                                    isActive
+                                        ? 'bg-terracotta text-white border border-terracotta shadow-md shadow-terracotta/25 font-bold scale-102'
+                                        : 'border border-slate-200/90 bg-white text-slate-700 hover:border-terracotta hover:text-terracotta hover:bg-orange-50/70 shadow-2xs'
+                                }`}
+                            >
+                                <span>{cat}</span>
+                            </button>
+                        );
+                    })}
+                </div>
+
+                {/* Tombol Navigasi Kanan */}
+                {canScrollRight && (
+                    <div className="absolute right-0 top-0 bottom-0 z-10 flex items-center pl-6 bg-gradient-to-l from-slate-50 via-slate-50/90 to-transparent">
+                        <button
+                            type="button"
+                            onClick={() => handleScroll('right')}
+                            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/95 backdrop-blur-xs border border-slate-200/90 shadow-md text-slate-700 hover:text-terracotta hover:border-terracotta hover:scale-105 active:scale-95 flex items-center justify-center transition-all cursor-pointer"
+                            aria-label="Scroll Kategori ke Kanan"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     );

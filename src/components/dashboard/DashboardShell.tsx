@@ -128,6 +128,20 @@ export default function DashboardShell({
 }: DashboardShellProps) {
     const pathname = usePathname();
     const [isMobileOpen, setIsMobileOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+    const handleLogout = async () => {
+        if (isLoggingOut) return;
+        setIsLoggingOut(true);
+        try {
+            if (typeof window !== 'undefined') {
+                localStorage.removeItem('lora_global_cart');
+            }
+            await logout();
+        } catch {
+            window.location.href = '/login';
+        }
+    };
 
     const isAdminRoute = pathname.startsWith('/admin');
     const activeNavItems = isAdminRoute ? adminNavItems : navItems;
@@ -298,15 +312,15 @@ export default function DashboardShell({
                     )}
 
                     {/* Quick Logout */}
-                    <form action={logout} onSubmit={() => { if (typeof window !== 'undefined') localStorage.removeItem('lora_global_cart'); }}>
-                        <button
-                            type="submit"
-                            className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl transition-all cursor-pointer text-left"
-                        >
-                            <LogOut className="w-3.5 h-3.5" />
-                            <span>Keluar Akun</span>
-                        </button>
-                    </form>
+                    <button
+                        type="button"
+                        onClick={handleLogout}
+                        disabled={isLoggingOut}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-950/40 rounded-xl transition-all cursor-pointer text-left disabled:opacity-50"
+                    >
+                        <LogOut className="w-3.5 h-3.5" />
+                        <span>{isLoggingOut ? 'Sedang keluar...' : 'Keluar Akun'}</span>
+                    </button>
                 </div>
             </aside>
 

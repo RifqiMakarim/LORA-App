@@ -114,7 +114,8 @@ export default function SalesForecastPage() {
   const prepareChartData = () => {
     if (!data || !data.historical_data || !data.forecast_data) return [];
 
-    const historySliceDays = horizon === '15_days' ? 15 : 7;
+    // Proporsional: 14 hari histori untuk horizon 7 hari, 30 hari histori untuk horizon 15 hari
+    const historySliceDays = horizon === '15_days' ? 30 : 14;
     const recentHistory = data.historical_data.slice(-historySliceDays);
 
     const chartPoints: Array<{
@@ -509,9 +510,9 @@ export default function SalesForecastPage() {
               <Line
                 type="monotone"
                 dataKey="historical_sales"
-                stroke="#94A3B8"
+                stroke="#1E293B"
                 strokeWidth={2.5}
-                dot={{ r: 4, fill: '#CBD5E1', stroke: '#0F172A', strokeWidth: 2 }}
+                dot={{ r: 4, fill: '#1E293B', stroke: '#FFFFFF', strokeWidth: 2 }}
                 name="Penjualan Historis"
                 connectNulls={true}
               >
@@ -520,7 +521,7 @@ export default function SalesForecastPage() {
                   position="top"
                   offset={10}
                   formatter={(val: unknown) => (typeof val === 'number' ? formatCompactIDR(val) : '')}
-                  style={{ fontSize: '10px', fontWeight: 600, fill: '#64748B' }}
+                  style={{ fontSize: '10px', fontWeight: 700, fill: '#334155' }}
                 />
               </Line>
 
@@ -530,7 +531,7 @@ export default function SalesForecastPage() {
                 dataKey="predicted_sales"
                 stroke="#D97706"
                 strokeWidth={2.5}
-                strokeDasharray="5 5"
+                strokeDasharray="4 4"
                 name="Proyeksi Penjualan"
                 connectNulls={true}
                 dot={(props: Record<string, unknown>) => {
@@ -571,7 +572,7 @@ export default function SalesForecastPage() {
                   position="top"
                   offset={10}
                   formatter={(val: unknown) => (typeof val === 'number' && val > 0 ? formatCompactIDR(val) : '')}
-                  style={{ fontSize: '10px', fontWeight: 700, fill: '#D97706' }}
+                  style={{ fontSize: '10px', fontWeight: 800, fill: '#D97706' }}
                 />
               </Line>
             </ComposedChart>
@@ -663,9 +664,9 @@ export default function SalesForecastPage() {
               <Line
                 type="monotone"
                 dataKey="historical_orders"
-                stroke="#94A3B8"
+                stroke="#1E293B"
                 strokeWidth={2.5}
-                dot={{ r: 4, fill: '#CBD5E1', stroke: '#0F172A', strokeWidth: 2 }}
+                dot={{ r: 4, fill: '#1E293B', stroke: '#FFFFFF', strokeWidth: 2 }}
                 name="Histori Transaksi"
                 connectNulls={true}
               >
@@ -674,7 +675,7 @@ export default function SalesForecastPage() {
                   position="top"
                   offset={10}
                   formatter={(val: unknown) => (typeof val === 'number' ? `${val}` : '')}
-                  style={{ fontSize: '10px', fontWeight: 600, fill: '#64748B' }}
+                  style={{ fontSize: '10px', fontWeight: 700, fill: '#334155' }}
                 />
               </Line>
 
@@ -684,7 +685,7 @@ export default function SalesForecastPage() {
                 dataKey="predicted_orders"
                 stroke="#10B981"
                 strokeWidth={2.5}
-                strokeDasharray="5 5"
+                strokeDasharray="4 4"
                 dot={(props: Record<string, unknown>) => {
                   const cx = props.cx as number;
                   const cy = props.cy as number;

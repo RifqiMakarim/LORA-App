@@ -119,15 +119,24 @@ export default function UserProfileDropdown({ user, profile }: UserProfileDropdo
 
                     <div className="border-t border-slate-100 pt-1">
                         {/* Tombol Keluar */}
-                        <form action={logout} onSubmit={() => { if (typeof window !== 'undefined') localStorage.removeItem('lora_global_cart'); }}>
-                            <button
-                                type="submit"
-                                className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors text-left"
-                            >
-                                <span>🚪</span>
-                                <span>Keluar dari Akun</span>
-                            </button>
-                        </form>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                setIsOpen(false);
+                                if (typeof window !== 'undefined') {
+                                    localStorage.removeItem('lora_global_cart');
+                                }
+                                try {
+                                    await logout();
+                                } catch {
+                                    window.location.href = '/login';
+                                }
+                            }}
+                            className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-rose-600 hover:text-rose-700 hover:bg-rose-50 rounded-xl transition-colors text-left cursor-pointer"
+                        >
+                            <span>🚪</span>
+                            <span>Keluar dari Akun</span>
+                        </button>
                     </div>
                 </div>
             )}

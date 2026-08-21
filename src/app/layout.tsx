@@ -16,6 +16,13 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "LORA - Local Omni-channel Regional Assistant",
   description: "Platform E-Commerce & Asisten AI Pemberdayaan UMKM Regional DIY & Jawa Tengah",
+  icons: {
+    icon: [
+      { url: '/images/lora-logo.png', href: '/images/lora-logo.png' },
+    ],
+    shortcut: '/images/lora-logo.png',
+    apple: '/images/lora-logo.png',
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

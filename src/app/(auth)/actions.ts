@@ -88,7 +88,7 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
         return { error: 'Email dan kata sandi wajib diisi.' }
     }
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data: authData, error } = await supabase.auth.signInWithPassword({
         email,
         password,
     })
@@ -97,8 +97,22 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
         return { error: error.message }
     }
 
+    // Cek apakah user adalah Super Admin (admin@lora.id / is_admin === true)
+    if (authData?.user?.id) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('is_admin')
+            .eq('id', authData.user.id)
+            .maybeSingle()
+
+        if (profile?.is_admin || authData.user.email === 'admin@lora.id') {
+            revalidatePath('/', 'layout')
+            redirect('/admin')
+        }
+    }
+
     revalidatePath('/', 'layout')
-    redirect('/')
+    redirect('/katalog')
 }
 
 // 3. Fungsi Keluar (Log Out)

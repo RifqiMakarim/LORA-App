@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import ProductCard from '@/components/storefront/ProductCard';
 import KatalogFilter from '@/components/storefront/KatalogFilter';
 import KatalogBannerSlider from '@/components/storefront/KatalogBannerSlider';
+import Pagination from '@/components/ui/Pagination';
 
 interface BusinessRel {
     name: string;
@@ -128,7 +129,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
     });
 
     // Logika Sorting Produk: Produk stok > 0 di atas, Stok <= 0 otomatis di paling bawah
-    const products: ProductWithBusiness[] = [...filteredProducts].sort((a, b) => {
+    const sortedProducts: ProductWithBusiness[] = [...filteredProducts].sort((a, b) => {
         const aHasStock = (a.stock || 0) > 0;
         const bHasStock = (b.stock || 0) > 0;
 
@@ -136,6 +137,18 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
         if (!aHasStock && bHasStock) return 1;
         return 0;
     });
+
+    // Paginasi: 16 Produk per Halaman (4x4 Desktop, 2 Kolom Mobile)
+    const ITEMS_PER_PAGE = 16;
+    const rawPage = Number(resolvedSearchParams.page) || 1;
+    const totalItems = sortedProducts.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+    const currentPage = Math.max(1, Math.min(rawPage, totalPages));
+
+    const paginatedProducts = sortedProducts.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     const activeLocationLabel = cityName || (regionTerm !== 'Semua Wilayah' ? regionTerm : '');
 
@@ -148,7 +161,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
             <KatalogFilter categories={categoriesList} availableCities={availableCities} />
 
             {/* Product Grid Section Header */}
-            <div suppressHydrationWarning className="space-y-4">
+            <div id="katalog-grid" suppressHydrationWarning className="space-y-6 scroll-mt-24">
                 <div suppressHydrationWarning className="flex items-center justify-between">
                     <h2 className="text-lg sm:text-xl font-outfit font-bold text-slate-900">
                         {activeLocationLabel
@@ -160,12 +173,12 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
                                     : 'Rekomendasi Produk Unggulan'}
                     </h2>
                     <span className="text-xs text-slate-500 font-medium">
-                        Menampilkan {products.length} Produk
+                        Total {totalItems} Produk
                     </span>
                 </div>
 
                 {/* Status Kosong / Empty State (Jika produk tidak ditemukan) */}
-                {(!products || products.length === 0 || error) ? (
+                {(!sortedProducts || sortedProducts.length === 0 || error) ? (
                     <div suppressHydrationWarning className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-10 sm:p-14 text-center space-y-4 shadow-sm">
                         <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto">
                             <PackageX className="w-8 h-8" />
@@ -187,25 +200,41 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
                         </div>
                     </div>
                 ) : (
-                    /* Grid Kartu Produk (Mobile 2 Kolom, Tablet 3 Kolom, Desktop 4 Kolom) */
-                    <div suppressHydrationWarning className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                        {products.map((product) => {
-                            const business = getBusiness(product.businesses);
-                            const storeSlug = business?.slug || 'toko';
-                            const storeName = business?.name || 'Toko UMKM';
-                            const locationName = business?.city_name || business?.province_name || 'DIY & Jateng';
+                    <>
+                        {/* Grid Kartu Produk (Mobile 2 Kolom, Tablet 3 Kolom, Desktop 4 Kolom) */}
+                        <div suppressHydrationWarning className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                            {paginatedProducts.map((product) => {
+                                const business = getBusiness(product.businesses);
+                                const storeSlug = business?.slug || 'toko';
+                                const storeName = business?.name || 'Toko UMKM';
+                                const locationName = business?.city_name || business?.province_name || 'DIY & Jateng';
 
-                            return (
-                                <ProductCard
-                                    key={product.id}
-                                    product={product}
-                                    storeSlug={storeSlug}
-                                    storeName={storeName}
-                                    locationName={locationName}
+                                return (
+                                    <ProductCard
+                                        key={product.id}
+                                        product={product}
+                                        storeSlug={storeSlug}
+                                        storeName={storeName}
+                                        locationName={locationName}
+                                    />
+                                );
+                            })}
+                        </div>
+
+                        {/* Komponen Paginasi */}
+                        {totalPages > 1 && (
+                            <div className="pt-4 border-t border-slate-200/80">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    totalItems={totalItems}
+                                    itemsPerPage={ITEMS_PER_PAGE}
+                                    scrollAnchor="katalog-grid"
+                                    itemLabel="produk"
                                 />
-                            );
-                        })}
-                    </div>
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>

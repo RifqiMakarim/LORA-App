@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ProductCard from '@/components/storefront/ProductCard';
+import Pagination from '@/components/ui/Pagination';
 
 export interface BusinessData {
     id: string;
@@ -55,6 +56,9 @@ interface TokoStorefrontViewProps {
 export default function TokoStorefrontView({ business, products }: TokoStorefrontViewProps) {
     const [selectedCategory, setSelectedCategory] = useState<string>('Semua');
     const [searchQuery, setSearchQuery] = useState<string>('');
+    const [currentPage, setCurrentPage] = useState<number>(1);
+
+    const ITEMS_PER_PAGE = 12;
 
     // Share Store Link
     const handleShareStore = () => {
@@ -81,6 +85,12 @@ export default function TokoStorefrontView({ business, products }: TokoStorefron
             (product.description && product.description.toLowerCase().includes(searchQuery.toLowerCase()));
         return matchesCategory && matchesSearch;
     });
+
+    const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE) || 1;
+    const paginatedProducts = filteredProducts.slice(
+        (currentPage - 1) * ITEMS_PER_PAGE,
+        currentPage * ITEMS_PER_PAGE
+    );
 
     // Location display helper
     const locationString = [business.village_name, business.district_name, business.city_name, business.province_name]
@@ -262,16 +272,34 @@ export default function TokoStorefrontView({ business, products }: TokoStorefron
                         </p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
-                        {filteredProducts.map((product) => (
-                            <ProductCard
-                                key={product.id}
-                                product={product}
-                                storeSlug={business.slug}
-                                storeName={business.name}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-6">
+                            {paginatedProducts.map((product) => (
+                                <ProductCard
+                                    key={product.id}
+                                    product={product}
+                                    storeSlug={business.slug}
+                                    storeName={business.name}
+                                />
+                            ))}
+                        </div>
+
+                        {totalPages > 1 && (
+                            <div className="mt-8 pt-4 border-t border-slate-200">
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    totalItems={filteredProducts.length}
+                                    itemsPerPage={ITEMS_PER_PAGE}
+                                    onPageChange={(page) => {
+                                        setCurrentPage(page);
+                                        window.scrollTo({ top: 350, behavior: 'smooth' });
+                                    }}
+                                    itemLabel="produk"
+                                />
+                            </div>
+                        )}
+                    </>
                 )}
             </div>
         </div>
