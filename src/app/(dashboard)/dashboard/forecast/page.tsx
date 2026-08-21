@@ -29,6 +29,7 @@ import type {
   SalesForecastResult,
   ForecastHorizon,
   ForecastPoint,
+  LocalEventInput,
 } from '@/lib/forecast/holtWinters';
 import { MarkdownRenderer } from '@/components/ai/MarkdownRenderer';
 
@@ -36,31 +37,90 @@ export default function SalesForecastPage() {
   const [horizon, setHorizon] = useState<ForecastHorizon>('7_days');
   const [data, setData] = useState<SalesForecastResult | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadingAI, setLoadingAI] = useState(false);
   const [refreshingAI, setRefreshingAI] = useState(false);
   const [calibrating, setCalibrating] = useState(false);
   const [calibrateResult, setCalibrateResult] = useState<string | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<ForecastPoint['associated_event'] | null>(null);
 
+  // Fungsi Lazy Loading untuk memanggil Google Gemini secara asinkron tanpa memblokir grafik
+  const fetchAiInsight = useCallback(async (forecastResult: SalesForecastResult, force = false) => {
+    try {
+      setLoadingAI(true);
+      const events: LocalEventInput[] = [];
+      if (forecastResult.forecast_data) {
+        const seen = new Set<string>();
+        for (const p of forecastResult.forecast_data) {
+          if (p.associated_event && !seen.has(p.associated_event.id)) {
+            seen.add(p.associated_event.id);
+            events.push({
+              id: p.associated_event.id,
+              title: p.associated_event.title,
+              province_name: p.associated_event.province_name,
+              city_name: p.associated_event.city_name,
+              start_date: p.date,
+              end_date: p.date,
+              expected_tourist_impact: p.associated_event.impact,
+            });
+          }
+        }
+      }
+
+      const res = await fetch('/api/forecast/ai-insight', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          horizon,
+          forceRefresh: force,
+          total_projected_revenue: forecastResult.total_projected_revenue,
+          growth_percentage: forecastResult.growth_percentage,
+          busy_summary: forecastResult.busy_summary,
+          quiet_summary: forecastResult.quiet_summary,
+          is_fallback_mode: forecastResult.is_fallback_mode,
+          events,
+        }),
+      });
+
+      const json = await res.json();
+      if (json.success && json.ai_qualitative_note) {
+        setData((prev) => prev ? { ...prev, ai_qualitative_note: json.ai_qualitative_note } : prev);
+      }
+    } catch (err) {
+      console.error('Failed to fetch lazy AI insight:', err);
+    } finally {
+      setLoadingAI(false);
+    }
+  }, [horizon]);
+
+  // Pemuatan data deret waktu utama (Sangat Cepat < 150ms)
   const fetchForecast = useCallback(async (isSilent = false) => {
     try {
       if (!isSilent) setLoading(true);
       const res = await fetch(`/api/forecast?horizon=${horizon}`);
-      const json = await res.json();
+      const json: SalesForecastResult = await res.json();
       setData(json);
+
+      // Jika belum ada narasi AI di cache database, muat secara asinkron di latar belakang
+      if (!json.ai_qualitative_note) {
+        fetchAiInsight(json, false);
+      } else {
+        setLoadingAI(false);
+      }
     } catch (err) {
       console.error('Failed to load forecast data:', err);
     } finally {
       if (!isSilent) setLoading(false);
     }
-  }, [horizon]);
+  }, [horizon, fetchAiInsight]);
 
   useEffect(() => {
     fetchForecast();
   }, [fetchForecast]);
 
   const handleRefreshAI = async () => {
+    if (!data || refreshingAI || loadingAI) return;
     setRefreshingAI(true);
-    await fetchForecast(true);
+    await fetchAiInsight(data, true);
     setRefreshingAI(false);
   };
 
@@ -272,11 +332,22 @@ export default function SalesForecastPage() {
           </button>
         </div>
 
-        <div className="text-xs sm:text-sm text-indigo-100 leading-relaxed font-medium relative z-10 space-y-3">
-          <MarkdownRenderer 
-            content={data?.ai_qualitative_note || data?.auto_insight || 'Proyeksi omzet periode ini siap meningkat. Pantau ketersediaan stok produk unggulan Anda.'} 
-            className="text-indigo-100"
-          />
+        {loadingAI && !data?.ai_qualitative_note ? (
+          <div className="space-y-3 py-1 animate-pulse relative z-10">
+            <div className="flex items-center gap-2 text-xs font-bold text-amber-300">
+              <Sparkles className="w-3.5 h-3.5 animate-spin text-amber-400" />
+              <span>AI LORA sedang menganalisis strategi proyeksi bisnis Anda...</span>
+            </div>
+            <div className="h-3.5 bg-indigo-900/60 rounded-full w-full" />
+            <div className="h-3.5 bg-indigo-900/60 rounded-full w-5/6" />
+            <div className="h-3.5 bg-indigo-900/40 rounded-full w-4/6" />
+          </div>
+        ) : (
+          <div className="text-xs sm:text-sm text-indigo-100 leading-relaxed font-medium relative z-10 space-y-3">
+            <MarkdownRenderer 
+              content={data?.ai_qualitative_note || data?.auto_insight || 'Proyeksi omzet periode ini siap meningkat. Pantau ketersediaan stok produk unggulan Anda.'} 
+              className="text-indigo-100"
+            />
 
           {/* Event Daerah Terdeteksi di Periode Forecast */}
           {data?.forecast_data && (
@@ -314,7 +385,8 @@ export default function SalesForecastPage() {
               );
             })()
           )}
-        </div>
+          </div>
+        )}
 
         {/* Action Bar */}
         <div className="pt-3 border-t border-indigo-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-indigo-200/80 relative z-10">

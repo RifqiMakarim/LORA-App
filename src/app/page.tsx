@@ -20,6 +20,7 @@ import ProductCard from '@/components/storefront/ProductCard';
 import HeroHpMockup from '@/components/landing/HeroHpMockup';
 import CountUp from '@/components/reactbits/CountUp';
 import FadeContent from '@/components/reactbits/FadeContent';
+import ShapeDivider from '@/components/ui/ShapeDivider';
 import { Toaster } from 'react-hot-toast';
 
 interface BusinessRel {
@@ -139,114 +140,130 @@ export default async function LandingPage() {
                 <Toaster position="top-right" reverseOrder={false} />
             </div>
 
-            <div suppressHydrationWarning className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 selection:bg-terracotta selection:text-white">
+            <div suppressHydrationWarning className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900 overflow-x-hidden selection:bg-terracotta selection:text-white">
                 {/* 1. NAVBAR LANDING PAGE (Guest Structure: LOGO - Solusi | Katalog | SDGs | FAQ - Masuk | Daftar) */}
                 <LandingNavbar user={user} profile={profile} />
 
-                <main className="flex-1 space-y-16 sm:space-y-24 pb-20">
+                <main className="flex-1 pb-20 overflow-x-hidden">
                     {/* 2. HERO SECTION BANNER UTAMA (DARK MODE ELEGAN, POSISI PRESISI FIT ABOVE THE FOLD) */}
-                    <section suppressHydrationWarning className="relative overflow-hidden bg-[#0B1120] text-white min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-90px)] flex items-center py-10 lg:py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800">
-                        {/* Background Ambient Decorative Glows */}
-                        <div className="absolute top-10 left-10 w-[28rem] h-[28rem] bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
-                        <div className="absolute bottom-10 right-10 w-[28rem] h-[28rem] bg-terracotta/25 rounded-full blur-3xl pointer-events-none" />
+                    <div className="relative">
+                        <section suppressHydrationWarning className="relative overflow-hidden bg-[#0B1120] text-white min-h-[calc(100vh-80px)] lg:min-h-[calc(100vh-90px)] flex items-center py-10 lg:py-16 px-4 sm:px-6 lg:px-8">
+                            {/* Background Ambient Decorative Glows */}
+                            <div className="absolute top-10 left-10 w-[28rem] h-[28rem] bg-amber-400/20 rounded-full blur-3xl pointer-events-none" />
+                            <div className="absolute bottom-10 right-10 w-[28rem] h-[28rem] bg-terracotta/25 rounded-full blur-3xl pointer-events-none" />
 
-                        <div suppressHydrationWarning className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center w-full">
-                            {/* KOLOM KANAN (Gambar Mockup HP max-h-58vh) -> 5-KOLOM DESKTOP */}
-                            <div className="order-1 lg:order-2 lg:col-span-5 relative flex justify-center items-center w-full mx-auto">
-                                <HeroHpMockup />
-                            </div>
-
-                            {/* KOLOM KIRI (Teks, CTA, & Stats - Ditarik ke Atas Tanpa Extra Margin Top) -> 7-KOLOM DESKTOP */}
-                            <div className="order-2 lg:order-1 lg:col-span-7 space-y-2.5 sm:space-y-3.5 lg:space-y-4 text-center lg:text-left flex flex-col items-center lg:items-start m-0 p-0">
-                                {/* H1 Headline (Diet Tipografi: max text-4xl lg:text-[2.75rem]) */}
-                                <FadeContent direction="up" distance={16} duration={850} delay={100} blur className="w-full">
-                                    <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] font-outfit font-bold tracking-tight leading-tight text-white text-center lg:text-left w-full">
-                                        Kembangkan Usaha UMKM Lebih Mudah dengan{' '}
-                                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-terracotta via-amber-500 to-amber-400">
-                                            Bantuan Kecerdasan Buatan
-                                        </span>
-                                    </h1>
-                                </FadeContent>
-
-                                {/* Subtitle Description (Diet Paragraf: text-xs sm:text-sm lg:text-base) */}
-                                <FadeContent direction="up" distance={14} duration={850} delay={220} className="w-full">
-                                    <p className="text-slate-300 text-xs sm:text-sm lg:text-base leading-relaxed text-center lg:text-left w-full max-w-2xl lg:max-w-none">
-                                        Platform dagang cerdas dan Asisten AI untuk membantu pelaku UMKM di segala sektor mengelola etalase toko digital, pengingat stok otomatis, dan strategi bisnis untuk meningkatkan omzet.
-                                    </p>
-                                </FadeContent>
-
-                                {/* Call to Action Button Group (Compact Spacing) */}
-                                <FadeContent direction="up" distance={14} duration={850} delay={340} className="w-full">
-                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-2.5 sm:gap-3 pt-0.5 w-full">
-                                        <Link
-                                            href="/katalog"
-                                            className="w-full sm:w-auto px-5 py-2.5 sm:py-3 bg-gradient-to-r from-terracotta to-amber-600 hover:from-terracotta-hover hover:to-amber-700 text-white rounded-2xl font-outfit font-semibold text-xs sm:text-sm shadow-lg shadow-terracotta/25 flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
-                                        >
-                                            <ShoppingBag className="w-4 h-4" />
-                                            <span>Jelajahi Katalog Produk</span>
-                                        </Link>
-
-                                        <Link
-                                            href={profile?.is_seller ? "/dashboard" : (user ? "/buka-toko" : "/register")}
-                                            className="w-full sm:w-auto px-5 py-2.5 sm:py-3 bg-slate-800/50 hover:bg-slate-800 text-white border border-slate-700 hover:border-slate-600 rounded-2xl font-outfit font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
-                                        >
-                                            <Store className="w-4 h-4 text-terracotta" />
-                                            <span>{profile?.is_seller ? "Dashboard Toko Saya" : "Buka Toko UMKM Gratis"}</span>
-                                        </Link>
-                                    </div>
-                                </FadeContent>
-
-                                {/* 3-Column Dynamic Stats Divider (Compact Typography & Padding) */}
-                                <FadeContent direction="up" distance={14} duration={850} delay={460} className="w-full">
-                                    <div className="grid grid-cols-3 gap-2.5 sm:gap-3 pt-2.5 sm:pt-3 border-t border-slate-800/80 max-w-md mx-auto lg:mx-0 text-center lg:text-left w-full">
-                                        {statsData.map((stat) => (
-                                            <div key={stat.id} className="space-y-0">
-                                                <CountUp
-                                                    to={stat.value}
-                                                    suffix={stat.suffix}
-                                                    separator={stat.separator}
-                                                    duration={3.2}
-                                                    className="text-lg sm:text-xl font-outfit font-bold text-terracotta block text-center lg:text-left"
-                                                />
-                                                <p className="text-[10px] sm:text-[11px] text-slate-400 font-semibold text-center lg:text-left">{stat.label}</p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </FadeContent>
-                            </div>
-                        </div>
-                    </section>
-
-                    {/* 3. SECTION MASALAH, SOLUSI & 6 FITUR UTAMA LORA (SEDERHANA & INKLUSIF) */}
-                    <FeaturesSection />
-
-                    {/* 4. SECTION PREVIEW KATALOG PRODUK UNGGULAN (SERVER COMPONENT FETCH) */}
-                    <section suppressHydrationWarning className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pt-4">
-                        {/* Header Katalog Produk with Fade Up */}
-                        <FadeContent direction="up" distance={20} duration={900} blur>
-                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-5">
-                                <div className="space-y-1">
-                                    <div className="inline-flex items-center gap-1.5 text-xs font-bold text-terracotta uppercase tracking-wider">
-                                        <ShoppingBag className="w-3.5 h-3.5" />
-                                        <span>Produk Pilihan UMKM DIY & Jateng</span>
-                                    </div>
-                                    <h2 className="text-2xl sm:text-4xl font-outfit font-black text-slate-900">
-                                        Daftar Katalog Produk Unggulan
-                                    </h2>
-                                    <p className="text-xs sm:text-sm text-slate-600">
-                                        Temukan ragam produk autentik dari berbagai sektor usaha karya pelaku UMKM lokal.
-                                    </p>
+                            <div suppressHydrationWarning className="max-w-7xl mx-auto relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-8 items-center w-full">
+                                {/* KOLOM KANAN (Gambar Mockup HP max-h-58vh) -> 5-KOLOM DESKTOP */}
+                                <div className="order-1 lg:order-2 lg:col-span-5 relative flex justify-center items-center w-full mx-auto">
+                                    <HeroHpMockup />
                                 </div>
 
-                                <Link
-                                    href="/katalog"
-                                    className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-terracotta hover:text-terracotta-hover transition-colors"
-                                >
-                                    <span>Lihat Semua Produk</span>
-                                    <ArrowRight className="w-4 h-4" />
-                                </Link>
+                                {/* KOLOM KIRI (Teks, CTA, & Stats - Ditarik ke Atas Tanpa Extra Margin Top) -> 7-KOLOM DESKTOP */}
+                                <div className="order-2 lg:order-1 lg:col-span-7 space-y-2.5 sm:space-y-3.5 lg:space-y-4 text-center lg:text-left flex flex-col items-center lg:items-start m-0 p-0">
+                                    {/* H1 Headline (Diet Tipografi: max text-4xl lg:text-[2.75rem]) */}
+                                    <FadeContent direction="up" distance={16} duration={850} delay={100} blur className="w-full">
+                                        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-[2.75rem] font-outfit font-bold tracking-tight leading-tight text-white text-center lg:text-left w-full">
+                                            Kembangkan Usaha UMKM Lebih Mudah dengan{' '}
+                                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-terracotta via-amber-500 to-amber-400">
+                                                Bantuan <i>Artificial Intelligence</i>
+                                            </span>
+                                        </h1>
+                                    </FadeContent>
+
+                                    {/* Subtitle Description (Diet Paragraf: text-xs sm:text-sm lg:text-base) */}
+                                    <FadeContent direction="up" distance={14} duration={850} delay={220} className="w-full">
+                                        <p className="text-slate-300 text-xs sm:text-sm lg:text-base leading-relaxed text-center lg:text-left w-full max-w-2xl lg:max-w-none">
+                                            Platform dagang cerdas dan Asisten AI untuk membantu pelaku UMKM di segala sektor mengelola etalase toko digital, pengingat stok otomatis, dan strategi bisnis untuk meningkatkan omzet.
+                                        </p>
+                                    </FadeContent>
+
+                                    {/* Call to Action Button Group (Compact Spacing) */}
+                                    <FadeContent direction="up" distance={14} duration={850} delay={340} className="w-full">
+                                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-center lg:justify-start gap-2.5 sm:gap-3 pt-0.5 w-full">
+                                            <Link
+                                                href="/katalog"
+                                                className="w-full sm:w-auto px-5 py-2.5 sm:py-3 bg-gradient-to-r from-terracotta to-amber-600 hover:from-terracotta-hover hover:to-amber-700 text-white rounded-2xl font-outfit font-semibold text-xs sm:text-sm shadow-lg shadow-terracotta/25 flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
+                                            >
+                                                <ShoppingBag className="w-4 h-4" />
+                                                <span>Jelajahi Katalog Produk</span>
+                                            </Link>
+
+                                            <Link
+                                                href={profile?.is_seller ? "/dashboard" : (user ? "/buka-toko" : "/register")}
+                                                className="w-full sm:w-auto px-5 py-2.5 sm:py-3 bg-slate-800/50 hover:bg-slate-800 text-white border border-slate-700 hover:border-slate-600 rounded-2xl font-outfit font-semibold text-xs sm:text-sm shadow-xs flex items-center justify-center gap-2 transition-all hover:scale-102 cursor-pointer"
+                                            >
+                                                <Store className="w-4 h-4 text-terracotta" />
+                                                <span>{profile?.is_seller ? "Dashboard Toko Saya" : "Buka Toko UMKM Gratis"}</span>
+                                            </Link>
+                                        </div>
+                                    </FadeContent>
+
+                                    {/* 3-Column Dynamic Stats Divider (Compact Typography & Padding) */}
+                                    <FadeContent direction="up" distance={14} duration={850} delay={460} className="w-full">
+                                        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 pt-2.5 sm:pt-3 border-t border-slate-800/80 max-w-md mx-auto lg:mx-0 text-center lg:text-left w-full">
+                                            {statsData.map((stat) => (
+                                                <div key={stat.id} className="space-y-0">
+                                                    <CountUp
+                                                        to={stat.value}
+                                                        suffix={stat.suffix}
+                                                        separator={stat.separator}
+                                                        duration={3.2}
+                                                        className="text-lg sm:text-xl font-outfit font-bold text-terracotta block text-center lg:text-left"
+                                                    />
+                                                    <p className="text-[10px] sm:text-[11px] text-slate-400 font-semibold text-center lg:text-left">{stat.label}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </FadeContent>
+                                </div>
                             </div>
-                        </FadeContent>
+                        </section>
+
+                        {/* Wave Shape Divider Overlap: Mengalir langsung dari Hero ke Solusi-Fitur */}
+                        <div className="absolute top-full left-0 right-0 w-full pointer-events-none z-20 -mt-[2px]">
+                            <ShapeDivider
+                                variant="wave"
+                                position="bottom"
+                                direction="outward"
+                                color="text-[#0B1120]"
+                                height="h-8 sm:h-12 md:h-16 lg:h-20"
+                                className="w-full"
+                            />
+                        </div>
+                    </div>
+
+                    {/* 3. SECTION MASALAH, SOLUSI & 6 FITUR UTAMA LORA */}
+                    <FeaturesSection />
+
+                    {/* SECTION LAINNYA DENGAN SPACING YANG RAPI */}
+                    <div className="space-y-16 sm:space-y-24 mt-16 sm:mt-24">
+                        {/* 4. SECTION PREVIEW KATALOG PRODUK UNGGULAN (SERVER COMPONENT FETCH) */}
+                        <section suppressHydrationWarning className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8 pt-4">
+                            {/* Header Katalog Produk with Fade Up */}
+                            <FadeContent direction="up" distance={20} duration={900} blur>
+                                <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-slate-200 pb-5">
+                                    <div className="space-y-1">
+                                        <div className="inline-flex items-center gap-1.5 text-xs font-bold text-terracotta uppercase tracking-wider">
+                                            <ShoppingBag className="w-3.5 h-3.5" />
+                                            <span>Produk Pilihan UMKM DIY & Jateng</span>
+                                        </div>
+                                        <h2 className="text-2xl sm:text-4xl font-outfit font-black text-slate-900">
+                                            Daftar Katalog Produk Unggulan
+                                        </h2>
+                                        <p className="text-xs sm:text-sm text-slate-600">
+                                            Temukan ragam produk autentik dari berbagai sektor usaha karya pelaku UMKM lokal.
+                                        </p>
+                                    </div>
+
+                                    <Link
+                                        href="/katalog"
+                                        className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-terracotta hover:text-terracotta-hover transition-colors"
+                                    >
+                                        <span>Lihat Semua Produk</span>
+                                        <ArrowRight className="w-4 h-4" />
+                                    </Link>
+                                </div>
+                            </FadeContent>
 
                         {/* Status Kosong / Grid Card Preview Produk */}
                         {(!products || products.length === 0 || error) ? (
@@ -274,6 +291,7 @@ export default async function LandingPage() {
                                             distance={24}
                                             duration={800}
                                             delay={idx * 100}
+                                            className="h-full"
                                         >
                                             <ProductCard
                                                 product={product}
@@ -309,7 +327,8 @@ export default async function LandingPage() {
 
                     {/* 7. SECTION FAQ (4 PERTANYAAN DASAR) */}
                     <FAQSection />
-                </main>
+                </div>
+            </main>
 
                 {/* 8. FOOTER LANDING PAGE */}
                 <LandingFooter />

@@ -159,10 +159,10 @@ export default async function AdminDashboardPage() {
               <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800">5 Transaksi Terakhir</h2>
             </div>
             <Link
-              href="/admin/users-stores"
+              href="/admin/transactions"
               className="text-[11px] font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-0.5 hover:underline"
             >
-              <span>Lihat Detail</span>
+              <span>Lihat Semua</span>
               <ArrowUpRight className="w-3.5 h-3.5" />
             </Link>
           </div>
@@ -274,31 +274,6 @@ export default async function AdminDashboardPage() {
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
-      </div>
-
-      {/* System Health Indicators */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-xs space-y-4">
-        <div className="flex items-center gap-2 pb-3 border-b border-slate-100">
-          <Activity className="w-4 h-4 text-emerald-600" />
-          <h2 className="text-sm font-bold uppercase tracking-wider text-slate-800">Status Gateway Platform</h2>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
-          <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gateway TemanQRIS</p>
-            <p className="text-base font-black text-emerald-600 mt-1">ONLINE / CEPAT</p>
-            <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Latency: 145ms</p>
-          </div>
-          <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Database Supabase</p>
-            <p className="text-base font-black text-emerald-600 mt-1">OPERASIONAL</p>
-            <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Koneksi RLS: OK</p>
-          </div>
-          <div className="p-4 bg-slate-50 border border-slate-100 rounded-2xl">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Layanan AI Gemini</p>
-            <p className="text-base font-black text-emerald-600 mt-1">AKTIF / ONLINE</p>
-            <p className="text-[9px] text-slate-400 font-semibold mt-0.5">Model: 1.5 Flash</p>
           </div>
         </div>
       </div>

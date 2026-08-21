@@ -135,7 +135,7 @@ export default function LoginPage() {
                             <button
                                 type="submit"
                                 disabled={isPending}
-                                className="w-full bg-terracotta hover:bg-terracotta-hover text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-terracotta/25 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center mt-6"
+                                className="w-full bg-terracotta hover:bg-terracotta-hover text-white font-semibold py-3.5 rounded-xl shadow-lg shadow-terracotta/25 transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-75 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center mt-6 cursor-pointer"
                             >
                                 {isPending ? (
                                     <>
@@ -164,7 +164,7 @@ export default function LoginPage() {
                         }}>
                             <button
                                 type="submit"
-                                className="w-full bg-white hover:bg-slate-50/80 text-slate-700 font-semibold py-3.5 rounded-xl border border-slate-200 transition-all duration-300 hover:border-slate-300 hover:shadow-sm active:scale-[0.99] flex items-center justify-center gap-3 text-sm"
+                                className="w-full bg-white hover:bg-slate-50/80 text-slate-700 font-semibold py-3.5 rounded-xl border border-slate-200 transition-all duration-300 hover:border-slate-300 hover:shadow-sm active:scale-[0.99] flex items-center justify-center gap-3 text-sm cursor-pointer"
                             >
                                 <GoogleIcon />
                                 <span>Lanjutkan dengan Google</span>
