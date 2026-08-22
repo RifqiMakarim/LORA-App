@@ -146,10 +146,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
         // 6. Notifikasi WA Penjual & Console.log simulasi Link WA
         if (orderData?.id && orderData?.wa_token) {
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            const appUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://loraapp.vercel.app';
             const actionUrl = `${appUrl}/dashboard/pesanan?highlight=${orderData.id}`;
-
-            console.log('Simulasi Link WA: ' + actionUrl);
 
             // Fetch data toko untuk mengambil nomor whatsapp/kontak penjual
             const { data: store } = await supabase
