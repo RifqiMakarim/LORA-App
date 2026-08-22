@@ -15,6 +15,32 @@ export async function GET(request: Request) {
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
+            // Ambil data user dari sesi yang baru aktif
+            const { data: { user } } = await supabase.auth.getUser()
+
+            if (user) {
+                // Cek apakah profil sudah tersedia di tabel profiles
+                const { data: existingProfile } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('id', user.id)
+                    .maybeSingle()
+
+                if (!existingProfile) {
+                    const fullName = user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Pengguna LORA'
+                    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null
+
+                    await supabase.from('profiles').insert([{
+                        id: user.id,
+                        full_name: fullName,
+                        avatar_url: avatarUrl,
+                        is_buyer: true,
+                        is_seller: false,
+                        is_admin: false,
+                    }])
+                }
+            }
+
             return NextResponse.redirect(`${origin}${next}`)
         }
     }

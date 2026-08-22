@@ -66,7 +66,31 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
             if (buyerProfile) {
                 if (buyerProfile.full_name) buyerName = buyerProfile.full_name;
-                if (buyerProfile.phone_number) buyerPhoneRaw = buyerProfile.phone_number;
+                if (buyerProfile.phone_number) {
+                    buyerPhoneRaw = buyerProfile.phone_number;
+                } else if (input.buyerPhone) {
+                    buyerPhoneRaw = input.buyerPhone;
+                    await supabase
+                        .from('profiles')
+                        .update({ phone_number: input.buyerPhone.trim() })
+                        .eq('id', customerId);
+                }
+            } else if (user) {
+                // Safeguard Defensif: Buat profil otomatis jika belum ada sebelum insert ke orders
+                const fallbackName = input.buyerName || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Pembeli LORA';
+                const initialPhone = input.buyerPhone ? input.buyerPhone.trim() : null;
+                buyerName = fallbackName;
+                if (initialPhone) buyerPhoneRaw = initialPhone;
+
+                await supabase.from('profiles').insert([{
+                    id: customerId,
+                    full_name: fallbackName,
+                    phone_number: initialPhone,
+                    avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || null,
+                    is_buyer: true,
+                    is_seller: false,
+                    is_admin: false,
+                }]);
             }
         }
 
@@ -122,10 +146,8 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
 
         // 6. Notifikasi WA Penjual & Console.log simulasi Link WA
         if (orderData?.id && orderData?.wa_token) {
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            const appUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_APP_URL || 'https://loraapp.vercel.app';
             const actionUrl = `${appUrl}/dashboard/pesanan?highlight=${orderData.id}`;
-
-            console.log('Simulasi Link WA: ' + actionUrl);
 
             // Fetch data toko untuk mengambil nomor whatsapp/kontak penjual
             const { data: store } = await supabase
