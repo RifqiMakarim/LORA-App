@@ -1,9 +1,11 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useState, useActionState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { login, loginWithGoogle } from '@/app/(auth)/actions';
+import DemoAccountsModal from '@/components/auth/DemoAccountsModal';
+import { Sparkles, CheckCircle2, Eye, EyeOff } from 'lucide-react';
 
 function GoogleIcon() {
     return (
@@ -39,6 +41,17 @@ function SpinnerIcon() {
 
 export default function LoginPage() {
     const [state, formAction, isPending] = useActionState(login, null);
+    const [isDemoModalOpen, setIsDemoModalOpen] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const [selectedRoleBadge, setSelectedRoleBadge] = useState<string | null>(null);
+
+    const handleSelectDemoAccount = (selectedEmail: string, selectedPassword: string, roleTitle: string) => {
+        setEmail(selectedEmail);
+        setPassword(selectedPassword);
+        setSelectedRoleBadge(roleTitle);
+    };
 
     return (
         <div className="min-h-screen w-full bg-slate-50 flex items-center justify-center p-4 sm:p-8 font-sans relative overflow-hidden">
@@ -46,10 +59,17 @@ export default function LoginPage() {
             <div className="absolute top-[-10%] right-[-10%] w-[30rem] h-[30rem] bg-terracotta/20 rounded-full blur-3xl pointer-events-none"></div>
             <div className="absolute bottom-[-10%] left-[-10%] w-[30rem] h-[30rem] bg-indigo/20 rounded-full blur-3xl pointer-events-none"></div>
 
+            {/* Modal Informasi & Akun Demo */}
+            <DemoAccountsModal
+                isOpen={isDemoModalOpen}
+                onClose={() => setIsDemoModalOpen(false)}
+                onSelectAccount={handleSelectDemoAccount}
+            />
+
             {/* Kontainer Kartu Utama */}
             <div className="w-full max-w-5xl bg-surface/90 backdrop-blur-md rounded-3xl shadow-2xl shadow-indigo/10 overflow-hidden flex flex-col md:flex-row-reverse relative z-10 border border-slate-100/80 transition-all duration-500">
 
-                {/* Sisi Kanan - Branding & Pesan (Disembunyikan di layar HP) */}
+                {/* Sisi Kanan - Branding & Hero Mascot LORA (Disembunyikan di layar HP) */}
                 <div className="hidden md:flex w-full md:w-5/12 bg-indigo p-10 text-white flex-col justify-between relative overflow-hidden">
                     {/* Pola Sorotan Halus */}
                     <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white via-transparent to-transparent"></div>
@@ -69,14 +89,14 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    {/* Bagian Tengah (Hero Image) */}
+                    {/* Bagian Tengah (Hero Mascot LORA) */}
                     <div className="relative z-10 flex-grow flex items-center justify-center py-6">
                         <Image
                             src="/images/masuk.png"
                             alt="Ilustrasi Masuk LORA"
-                            width={350}
-                            height={350}
-                            className="mx-auto drop-shadow-2xl object-contain"
+                            width={340}
+                            height={340}
+                            className="mx-auto drop-shadow-2xl object-contain hover:scale-105 transition-transform duration-500"
                             priority
                         />
                     </div>
@@ -85,10 +105,31 @@ export default function LoginPage() {
                 {/* Sisi Kiri - Formulir Login */}
                 <div className="w-full md:w-7/12 p-8 md:p-12 lg:p-16 bg-white">
                     <div className="max-w-md mx-auto">
+                        
+                        {/* Quick Demo Pill & Badge Status (Universal: Mobile & Desktop) */}
+                        <div className="mb-4 flex items-center justify-between gap-2 flex-wrap">
+                            <button
+                                type="button"
+                                onClick={() => setIsDemoModalOpen(true)}
+                                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 hover:bg-amber-100/90 border border-amber-200/80 text-amber-900 text-xs font-semibold transition-all hover:scale-[1.02] cursor-pointer shadow-xs"
+                            >
+                                <Sparkles className="w-3.5 h-3.5 text-terracotta" />
+                                <span>Pilih Akun Demo (1-Klik)</span>
+                            </button>
+
+                            {selectedRoleBadge && (
+                                <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-full animate-in fade-in">
+                                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                                    <span>{selectedRoleBadge}</span>
+                                </span>
+                            )}
+                        </div>
+
                         <h2 className="text-3xl font-outfit font-bold text-indigo mb-2">Masuk</h2>
-                        <p className="text-slate-500 text-sm mb-8">Silakan masukkan email dan kata sandi Anda.</p>
+                        <p className="text-slate-500 text-sm mb-6">Silakan masukkan email dan kata sandi Anda.</p>
 
                         <form action={formAction} className="space-y-5">
+                            {/* Kolom Email */}
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider" htmlFor="email">
                                     Email
@@ -98,11 +139,17 @@ export default function LoginPage() {
                                     id="email"
                                     name="email"
                                     required
+                                    value={email}
+                                    onChange={(e) => {
+                                        setEmail(e.target.value);
+                                        setSelectedRoleBadge(null);
+                                    }}
                                     placeholder="anda@email.com"
                                     className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 text-indigo placeholder-slate-400 text-sm transition-all duration-300 hover:border-slate-300 focus:bg-white focus:border-terracotta focus:ring-4 focus:ring-terracotta/15 focus:outline-none"
                                 />
                             </div>
 
+                            {/* Kolom Kata Sandi dengan Tombol Show/Hide Password */}
                             <div className="space-y-1.5">
                                 <div className="flex justify-between items-center">
                                     <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider" htmlFor="password">
@@ -112,14 +159,31 @@ export default function LoginPage() {
                                         Lupa kata sandi?
                                     </Link>
                                 </div>
-                                <input
-                                    type="password"
-                                    id="password"
-                                    name="password"
-                                    required
-                                    placeholder="Masukkan kata sandi Anda"
-                                    className="w-full px-4 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 text-indigo placeholder-slate-400 text-sm transition-all duration-300 hover:border-slate-300 focus:bg-white focus:border-terracotta focus:ring-4 focus:ring-terracotta/15 focus:outline-none"
-                                />
+                                <div className="relative">
+                                    <input
+                                        type={showPassword ? 'text' : 'password'}
+                                        id="password"
+                                        name="password"
+                                        required
+                                        value={password}
+                                        onChange={(e) => setPassword(e.target.value)}
+                                        placeholder="Masukkan kata sandi Anda"
+                                        className="w-full px-4 pr-12 py-3.5 rounded-xl border border-slate-200 bg-slate-50/80 text-indigo placeholder-slate-400 text-sm transition-all duration-300 hover:border-slate-300 focus:bg-white focus:border-terracotta focus:ring-4 focus:ring-terracotta/15 focus:outline-none [&::-ms-reveal]:hidden [&::-ms-clear]:hidden"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none p-1 rounded-md transition-colors cursor-pointer"
+                                        tabIndex={-1}
+                                        aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="w-5 h-5 text-slate-500" />
+                                        ) : (
+                                            <Eye className="w-5 h-5 text-slate-400" />
+                                        )}
+                                    </button>
+                                </div>
                             </div>
 
                             {/* Pesan Error Dinamis */}
