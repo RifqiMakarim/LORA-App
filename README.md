@@ -239,7 +239,7 @@ Aplikasi telah dilengkapi dengan data seed realistis untuk UMKM wilayah DIY & Ja
 | **Seller Kerajinan** | `seller.gerabah@lora.id` | `LoraApp2026!` | `/katalog` & `/dashboard` |
 | **Seller Kerajinan** | `seller.jepara@lora.id` | `LoraApp2026!` | `/katalog` & `/dashboard` |
 | **Seller Kuliner** | `seller.semarang@lora.id` | `LoraApp2026!` | `/katalog` & `/dashboard` |
-| **Pembeli (Buyer)** | `buyer1@lora.id` | `LoraApp2026!` | `/katalog` |
+| **Pembeli (Buyer)** | `rifqi@lora.id` | `LoraApp2026!` | `/katalog` |
 
 ---
 
