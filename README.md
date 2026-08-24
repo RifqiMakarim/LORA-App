@@ -234,11 +234,12 @@ Aplikasi telah dilengkapi dengan data seed realistis untuk UMKM wilayah DIY & Ja
 | Peran Akun | Alamat Email | Password | Akses URL Utama |
 | :--- | :--- | :--- | :--- |
 | **Super Admin** | `admin@lora.id` | `LoraApp2026!` | `/admin` |
-| **Seller Batik (Pekalongan)** | `batik.sekarjagad@lora.id` | `LoraApp2026!` | `/dashboard` |
-| **Seller Kuliner (Yogyakarta)** | `gudeg.buwiryo@lora.id` | `LoraApp2026!` | `/dashboard` |
-| **Seller Kerajinan (Bantul)** | `gerabah.kasongan@lora.id` | `LoraApp2026!` | `/dashboard` |
-| **Seller Kopi (Temanggung)** | `kopi.sindoro@lora.id` | `LoraApp2026!` | `/dashboard` |
-| **Pembeli (Buyer)** | `buyer1@lora.id` | `LoraApp2026!` | `/katalog` & `/user/pesanan` |
+| **Seller Batik** | `seller.batik@lora.id` | `LoraApp2026!` | `/katalog` & `/dashboard` |
+| **Seller Kuliner** | `seller.bakpia@lora.id` | `LoraApp2026!` | `/katalog` & `/dashboard` |
+| **Seller Kerajinan** | `seller.gerabah@lora.id` | `LoraApp2026!` | `/katalog` & `/dashboard` |
+| **Seller Kerajinan** | `seller.jepara@lora.id` | `LoraApp2026!` | `/katalog` & `/dashboard` |
+| **Seller Kuliner** | `seller.semarang@lora.id` | `LoraApp2026!` | `/katalog` & `/dashboard` |
+| **Pembeli (Buyer)** | `buyer1@lora.id` | `LoraApp2026!` | `/katalog` |
 
 ---
 
