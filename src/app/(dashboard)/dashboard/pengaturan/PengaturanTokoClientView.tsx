@@ -542,8 +542,9 @@ export default function PengaturanTokoClientView({ business }: PengaturanTokoCli
                         {/* Upload Logo */}
                         <ImageUpload
                             value={logoUrl}
+                            mediaType="logo"
                             label="Foto Logo / Profil Toko"
-                            helperText="Format JPG, PNG, atau WEBP (Rasio 1:1)"
+                            helperText="Format JPG, PNG, atau WEBP (Otomatis WebP 300x300)"
                             aspectRatio="square"
                             onConfirm={(url) => setLogoUrl(url)}
                             onRemove={() => setLogoUrl('')}
@@ -552,8 +553,9 @@ export default function PengaturanTokoClientView({ business }: PengaturanTokoCli
                         {/* Upload Banner */}
                         <ImageUpload
                             value={bannerUrl}
+                            mediaType="banner"
                             label="Foto Banner / Sampul Header Toko"
-                            helperText="Format JPG, PNG, atau WEBP (Rasio 16:9)"
+                            helperText="Format JPG, PNG, atau WEBP (Otomatis WebP Lebar 1200px)"
                             aspectRatio="banner"
                             onConfirm={(url) => setBannerUrl(url)}
                             onRemove={() => setBannerUrl('')}
@@ -571,8 +573,9 @@ export default function PengaturanTokoClientView({ business }: PengaturanTokoCli
                             {/* Upload QRIS */}
                             <ImageUpload
                                 value={qrisImageUrl}
+                                mediaType="qris"
                                 label="Gambar Kode QRIS Toko"
-                                helperText="Unggah gambar/poster resmi QRIS toko (format persegi maupun ber-border). Otomatis disesuaikan di checkout."
+                                helperText="Unggah gambar/poster resmi QRIS toko (format persegi maupun ber-border). Format asli dipertahankan demi akurasi scan."
                                 aspectRatio="square"
                                 onConfirm={(url) => setQrisImageUrl(url)}
                                 onRemove={() => setQrisImageUrl('')}

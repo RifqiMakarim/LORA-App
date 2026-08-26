@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { MapPin, ShoppingCart, Share2, Store, PackageX, AlertTriangle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCart, CartProduct } from '@/components/storefront/CartContext';
+import { getProductImageWebp } from '@/lib/image-utils';
 
 export interface ProductCardProps {
     product: {
@@ -81,7 +82,7 @@ export default function ProductCard({ product, storeSlug, storeName, locationNam
                 <div className="relative aspect-square overflow-hidden bg-slate-100 block flex-shrink-0">
                     {product.image_url ? (
                         <img
-                            src={product.image_url}
+                            src={getProductImageWebp(product.image_url, 400)}
                             alt={product.name}
                             className={`w-full h-full object-cover group-hover:scale-105 transition-transform duration-300 ${
                                 isOutOfStock ? 'opacity-60 grayscale-[50%]' : ''
