@@ -17,6 +17,7 @@ import {
 import toast from 'react-hot-toast';
 import ProductCard from '@/components/storefront/ProductCard';
 import Pagination from '@/components/ui/Pagination';
+import { optimizeCloudinaryUrl } from '@/lib/image-utils';
 
 export interface BusinessData {
     id: string;
@@ -127,7 +128,7 @@ export default function TokoStorefrontView({ business, products }: TokoStorefron
                     <div className="relative h-36 sm:h-64 w-full bg-gradient-to-r from-slate-950 via-slate-900 to-amber-950 overflow-hidden">
                         {business.banner_url ? (
                             <img
-                                src={business.banner_url}
+                                src={optimizeCloudinaryUrl(business.banner_url, 'banner')}
                                 alt={`Banner ${business.name}`}
                                 className="w-full h-full object-cover opacity-85"
                             />
@@ -147,7 +148,7 @@ export default function TokoStorefrontView({ business, products }: TokoStorefron
                             <div className="relative w-20 h-20 sm:w-32 sm:h-32 rounded-2xl sm:rounded-3xl bg-slate-900 p-1 sm:p-1.5 shadow-2xl border border-slate-700 flex-shrink-0">
                                 {business.logo_url ? (
                                     <img
-                                        src={business.logo_url}
+                                        src={optimizeCloudinaryUrl(business.logo_url, 'logo')}
                                         alt={business.name}
                                         className="w-full h-full object-cover rounded-xl sm:rounded-2xl bg-slate-800"
                                     />

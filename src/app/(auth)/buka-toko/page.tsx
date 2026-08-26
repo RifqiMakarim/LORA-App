@@ -467,8 +467,9 @@ export default function BukaTokoPage() {
                                 {/* Input: Foto Logo / Profil Toko (Komponen ImageUpload dengan Pratinjau & Tombol Gunakan Foto Ini) */}
                                 <ImageUpload
                                     value={logoUrl}
+                                    mediaType="logo"
                                     label="Foto Logo / Profil Toko (Opsional)"
-                                    helperText="Format JPG, PNG, atau WEBP. Disarankan rasio 1:1."
+                                    helperText="Format JPG, PNG, atau WEBP (Otomatis WebP 300x300)."
                                     aspectRatio="square"
                                     onConfirm={(url) => setLogoUrl(url)}
                                     onRemove={() => setLogoUrl('')}
@@ -477,8 +478,9 @@ export default function BukaTokoPage() {
                                 {/* Input: Foto Banner Toko (Komponen ImageUpload dengan Pratinjau & Tombol Gunakan Foto Ini) */}
                                 <ImageUpload
                                     value={bannerUrl}
+                                    mediaType="banner"
                                     label="Foto Banner / Sampul Toko (Opsional)"
-                                    helperText="Format JPG, PNG, atau WEBP. Disarankan rasio 16:9."
+                                    helperText="Format JPG, PNG, atau WEBP (Otomatis WebP Lebar 1200px)."
                                     aspectRatio="banner"
                                     onConfirm={(url) => setBannerUrl(url)}
                                     onRemove={() => setBannerUrl('')}

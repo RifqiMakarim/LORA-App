@@ -28,6 +28,7 @@ import {
     Maximize2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getProductImageWebp } from '@/lib/image-utils';
 import { useCart } from '@/components/storefront/CartContext';
 import { createOrder } from '@/app/actions/order';
 import { supabase } from '@/lib/supabase/client';
@@ -333,7 +334,7 @@ export default function DedicatedCheckoutPage() {
                                     <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                                         {product.image_url ? (
                                             <img
-                                                src={product.image_url}
+                                                src={getProductImageWebp(product.image_url, 150)}
                                                 alt={product.name}
                                                 className="w-full h-full object-cover"
                                             />

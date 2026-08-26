@@ -22,6 +22,7 @@ import {
 import toast, { Toaster } from 'react-hot-toast';
 import ImageUpload from '@/components/ImageUpload';
 import Pagination from '@/components/ui/Pagination';
+import { getProductImageWebp } from '@/lib/image-utils';
 
 interface Product {
   id: string;
@@ -568,7 +569,7 @@ export default function InventoryClient({
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden flex-shrink-0 flex items-center justify-center">
                           {p.image_url ? (
-                            <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                            <img src={getProductImageWebp(p.image_url, 150)} alt={p.name} className="w-full h-full object-cover" />
                           ) : (
                             <ImageIcon className="w-5 h-5 text-slate-400 stroke-1" />
                           )}
@@ -764,8 +765,9 @@ export default function InventoryClient({
                   onConfirm={(url) => setFormImageUrl(url)}
                   onRemove={() => setFormImageUrl('')}
                   uploadPreset="lora_toko"
+                  mediaType="product"
                   label="Foto Produk"
-                  helperText="Unggah foto produk terbaik Anda menggunakan Cloudinary (Maks 5MB)"
+                  helperText="Unggah foto produk terbaik Anda menggunakan Cloudinary (Maks 5MB, Otomatis WebP)"
                 />
               </div>
 

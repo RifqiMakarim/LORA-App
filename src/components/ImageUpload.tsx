@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { CldUploadWidget } from 'next-cloudinary';
 import { Camera, Check, CheckCircle2, Loader2, RefreshCw, Trash2, Image as ImageIcon } from 'lucide-react';
+import { optimizeCloudinaryUrl, MediaType } from '@/lib/image-utils';
 
 export interface ImageUploadProps {
     value?: string;
@@ -12,6 +13,7 @@ export interface ImageUploadProps {
     label?: string;
     helperText?: string;
     aspectRatio?: 'square' | 'banner';
+    mediaType?: MediaType;
 }
 
 export default function ImageUpload({
@@ -22,6 +24,7 @@ export default function ImageUpload({
     label = 'Foto',
     helperText = 'Format JPG, PNG, atau WEBP (Maksimal 5MB)',
     aspectRatio = 'square',
+    mediaType = 'product',
 }: ImageUploadProps) {
     const [confirmedUrl, setConfirmedUrl] = useState<string>(value);
     const [pendingUrl, setPendingUrl] = useState<string>('');
@@ -60,7 +63,8 @@ export default function ImageUpload({
     // Handle saat upload selesai dari CldUploadWidget atau input file
     const handleUploadSuccess = (url: string) => {
         setIsUploading(false);
-        setPendingUrl(url);
+        const optimizedUrl = optimizeCloudinaryUrl(url, mediaType);
+        setPendingUrl(optimizedUrl);
         setIsSuccess(true);
         setIsConfirmed(false);
         forceUnlockScroll();

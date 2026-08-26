@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { logout } from '@/app/(auth)/actions';
 import NotificationDropdown from '@/components/dashboard/NotificationDropdown';
+import { optimizeCloudinaryUrl } from '@/lib/image-utils';
 
 interface DashboardShellProps {
     children: React.ReactNode;
@@ -212,7 +213,7 @@ export default function DashboardShell({
                             </div>
                         ) : business?.logo_url ? (
                             <img
-                                src={business.logo_url}
+                                src={optimizeCloudinaryUrl(business.logo_url, 'logo')}
                                 alt={shopName}
                                 className="w-10 h-10 rounded-xl object-cover border border-slate-700 shadow-sm"
                             />

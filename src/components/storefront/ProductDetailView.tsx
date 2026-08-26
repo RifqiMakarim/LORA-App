@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useCart } from '@/components/storefront/CartContext';
+import { getProductImageWebp, optimizeCloudinaryUrl } from '@/lib/image-utils';
 
 export interface ProductDetailProps {
     product: {
@@ -118,7 +119,7 @@ export default function ProductDetailView({ product, business }: ProductDetailPr
                         <div className="relative aspect-square rounded-2xl overflow-hidden bg-slate-100 border border-slate-200 shadow-inner">
                             {product.image_url ? (
                                 <img
-                                    src={product.image_url}
+                                    src={getProductImageWebp(product.image_url, 800)}
                                     alt={product.name}
                                     className="w-full h-full object-cover"
                                 />
@@ -152,7 +153,7 @@ export default function ProductDetailView({ product, business }: ProductDetailPr
                             <div className="flex items-center gap-2.5 min-w-0">
                                 {business.logo_url ? (
                                     <img
-                                        src={business.logo_url}
+                                        src={optimizeCloudinaryUrl(business.logo_url, 'logo')}
                                         alt={business.name}
                                         className="w-9 h-9 rounded-xl object-cover border border-slate-300"
                                     />
