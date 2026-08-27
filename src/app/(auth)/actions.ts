@@ -1,6 +1,5 @@
 'use server'
 
-import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
@@ -73,7 +72,6 @@ export async function signup(prevState: AuthState, formData: FormData): Promise<
         }
     }
 
-    revalidatePath('/', 'layout')
     redirect('/')
 }
 
@@ -106,12 +104,10 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
             .maybeSingle()
 
         if (profile?.is_admin || authData.user.email === 'admin@lora.id') {
-            revalidatePath('/', 'layout')
             redirect('/admin')
         }
     }
 
-    revalidatePath('/', 'layout')
     redirect('/katalog')
 }
 
@@ -119,7 +115,6 @@ export async function login(prevState: AuthState, formData: FormData): Promise<A
 export async function logout() {
     const supabase = await createClient()
     await supabase.auth.signOut()
-    revalidatePath('/', 'layout')
     redirect('/')
 }
 
