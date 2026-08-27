@@ -124,7 +124,6 @@ export async function createOrder(input: CreateOrderInput): Promise<CreateOrderR
         if (orderData?.id && orderData?.wa_token) {
             const actionUrl = `https://loraapp.vercel.app/dashboard/pesanan?highlight=${orderData.id}`;
 
-            console.log('Simulasi Link WA: ' + actionUrl);
 
             // Fetch data toko untuk mengambil nomor whatsapp/kontak penjual
             const { data: store } = await supabase
