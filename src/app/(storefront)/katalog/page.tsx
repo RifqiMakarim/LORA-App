@@ -48,20 +48,24 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
 
     const supabase = await createClient();
 
-    // 1. Ambil Data Kategori Dinamis dari Tabel `product_categories` (Struktur Utama)
-    const { data: rawCategories } = await supabase
-        .from('product_categories')
-        .select('name');
+    // 1. Ambil Data Kategori & Kota Dinamis secara Paralel (Promise.all)
+    const [categoriesResponse, citiesResponse] = await Promise.all([
+        supabase.from('product_categories').select('name'),
+        supabase.from('businesses').select('city_name').not('city_name', 'is', null),
+    ]);
+
+    const rawCategories = categoriesResponse.data || [];
+    const rawCities = citiesResponse.data || [];
 
     const uniqueCategoryNames: string[] = Array.from(
         new Set(
-            (rawCategories || [])
+            rawCategories
                 .map(c => c.name?.trim())
                 .filter((name): name is string => Boolean(name && name.length > 0))
         )
     ).sort(); // Sortir alfabetis
 
-    // Pisahkan 'Lainnya' agar selalu di akhir (Integrasi ide dari branch sebelah)
+    // Pisahkan 'Lainnya' agar selalu di akhir
     const uniqueCatsFiltered = uniqueCategoryNames.filter(c => c.toLowerCase() !== 'lainnya');
     const categoriesList = ['Semua Produk', ...uniqueCatsFiltered];
 
@@ -69,24 +73,29 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
         categoriesList.push('Lainnya');
     }
 
-    // 2. Ambil Data Kota secara Unik (Distinct) dari Tabel `businesses`
-    const { data: rawCities } = await supabase
-        .from('businesses')
-        .select('city_name')
-        .not('city_name', 'is', null);
-
+    // Ambil Data Kota secara Unik (Distinct) dari Tabel `businesses`
     const availableCities: string[] = Array.from(
         new Set(
-            (rawCities || [])
+            rawCities
                 .map(b => b.city_name?.trim())
                 .filter((city): city is string => Boolean(city && city.length > 0))
         )
     ).sort();
 
-    // 3. Inisialisasi Dynamic Query Supabase Produk
+    // 2. Setup Paginasi SQL
+    const ITEMS_PER_PAGE = 16;
+    const rawPage = Math.max(1, Number(resolvedSearchParams.page) || 1);
+    const from = (rawPage - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
+    // 3. Inisialisasi Dynamic Query Supabase Produk dengan SQL Filtering & Pagination
+    const selectRelation = (cityName || (regionTerm && regionTerm !== 'Semua Wilayah' && regionTerm !== 'Semua'))
+        ? '*, businesses!inner(name, slug, city_name, province_name)'
+        : '*, businesses(name, slug, city_name, province_name)';
+
     let query = supabase
         .from('products')
-        .select('*, businesses(name, slug, city_name, province_name)')
+        .select(selectRelation, { count: 'exact' })
         .eq('is_active', true);
 
     // Filter Pencarian Teks (ilike pada nama atau deskripsi produk)
@@ -99,9 +108,22 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
         query = query.eq('category', categoryTerm);
     }
 
-    // Eksekusi Query Supabase
-    const { data: rawProducts, error } = await query.order('created_at', { ascending: false });
-    const fetchedProducts: ProductWithBusiness[] = rawProducts || [];
+    // Filter Kota / Wilayah via PostgREST Join
+    if (cityName) {
+        query = query.ilike('businesses.city_name', `%${cityName}%`);
+    } else if (regionTerm && regionTerm !== 'Semua Wilayah' && regionTerm !== 'Semua') {
+        query = query.or(`businesses.city_name.ilike.%${regionTerm}%,businesses.province_name.ilike.%${regionTerm}%`);
+    }
+
+    // Eksekusi Query Supabase Berbasis SQL Range & Sorting
+    const { data: rawProducts, count: totalCount, error } = await query
+        .order('created_at', { ascending: false })
+        .range(from, to);
+
+    const paginatedProducts: ProductWithBusiness[] = rawProducts || [];
+    const totalItems = totalCount || 0;
+    const totalPages = Math.max(1, Math.ceil(totalItems / ITEMS_PER_PAGE));
+    const currentPage = Math.min(rawPage, totalPages);
 
     // Helper mengekstrak data relasi bisnis tunggal
     const getBusiness = (b: BusinessRel | BusinessRel[] | null): BusinessRel | null => {
@@ -109,46 +131,6 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
         if (Array.isArray(b)) return b[0] || null;
         return b;
     };
-
-    // Filter Wilayah Berbasis Kota Dinamis yang dipilih
-    const filteredProducts: ProductWithBusiness[] = fetchedProducts.filter(product => {
-        const bus = getBusiness(product.businesses);
-        if (!bus) return true;
-
-        const locString = `${bus.city_name || ''} ${bus.province_name || ''}`.toLowerCase();
-
-        if (cityName) {
-            return locString.includes(cityName.toLowerCase());
-        }
-
-        if (regionTerm && regionTerm !== 'Semua Wilayah' && regionTerm !== 'Semua') {
-            return locString.includes(regionTerm.toLowerCase());
-        }
-
-        return true;
-    });
-
-    // Logika Sorting Produk: Produk stok > 0 di atas, Stok <= 0 otomatis di paling bawah
-    const sortedProducts: ProductWithBusiness[] = [...filteredProducts].sort((a, b) => {
-        const aHasStock = (a.stock || 0) > 0;
-        const bHasStock = (b.stock || 0) > 0;
-
-        if (aHasStock && !bHasStock) return -1;
-        if (!aHasStock && bHasStock) return 1;
-        return 0;
-    });
-
-    // Paginasi: 16 Produk per Halaman (4x4 Desktop, 2 Kolom Mobile)
-    const ITEMS_PER_PAGE = 16;
-    const rawPage = Number(resolvedSearchParams.page) || 1;
-    const totalItems = sortedProducts.length;
-    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
-    const currentPage = Math.max(1, Math.min(rawPage, totalPages));
-
-    const paginatedProducts = sortedProducts.slice(
-        (currentPage - 1) * ITEMS_PER_PAGE,
-        currentPage * ITEMS_PER_PAGE
-    );
 
     const activeLocationLabel = cityName || (regionTerm !== 'Semua Wilayah' ? regionTerm : '');
 
@@ -178,7 +160,7 @@ export default async function KatalogPage({ searchParams }: KatalogPageProps) {
                 </div>
 
                 {/* Status Kosong / Empty State (Jika produk tidak ditemukan) */}
-                {(!sortedProducts || sortedProducts.length === 0 || error) ? (
+                {(!paginatedProducts || paginatedProducts.length === 0 || error) ? (
                     <div suppressHydrationWarning className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200 p-10 sm:p-14 text-center space-y-4 shadow-sm">
                         <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto">
                             <PackageX className="w-8 h-8" />

@@ -55,51 +55,44 @@ export default async function LandingPage() {
     const { data: { user } } = await supabase.auth.getUser();
     let profile = null;
     if (user) {
-        const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .maybeSingle();
+        const [profileRes, businessRes] = await Promise.all([
+            supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+            supabase.from('businesses').select('id, name, slug').eq('owner_id', user.id).maybeSingle(),
+        ]);
 
-        const { data: businessData } = await supabase
-            .from('businesses')
-            .select('id, name, slug')
-            .eq('owner_id', user.id)
-            .maybeSingle();
+        const profileData = profileRes.data;
+        const businessData = businessRes.data;
 
         if (profileData) {
             profile = { ...profileData };
-            // Jika user memiliki toko terdaftar tapi is_seller masih false/null, perbaiki statusnya
+            // Jika user memiliki toko terdaftar tapi is_seller masih false/null, sinkronkan statusnya
             if (businessData && !profile.is_seller) {
                 profile.is_seller = true;
-                supabase
-                    .from('profiles')
-                    .update({ is_seller: true, updated_at: new Date().toISOString() })
-                    .eq('id', user.id)
-                    .then(({ error }) => {
-                        if (error) console.error('[LandingPage] Auto-sync profile is_seller error:', error);
-                    });
             }
         }
     }
 
-    // Fetch preview produk unggulan (hanya produk aktif & stok > 0, maksimal 8 produk)
-    const { data: rawProducts, error } = await supabase
-        .from('products')
-        .select('*, businesses(name, slug, city_name, province_name)')
-        .eq('is_active', true)
-        .gt('stock', 0)
-        .order('created_at', { ascending: false })
-        .limit(8);
+    // Fetch preview produk unggulan & agregat statistik secara paralel (Promise.all)
+    const [productsRes, businessesCountRes, productsCountRes] = await Promise.all([
+        supabase
+            .from('products')
+            .select('*, businesses(name, slug, city_name, province_name)')
+            .eq('is_active', true)
+            .gt('stock', 0)
+            .order('created_at', { ascending: false })
+            .limit(8),
+        supabase
+            .from('businesses')
+            .select('*', { count: 'exact', head: true }),
+        supabase
+            .from('products')
+            .select('*', { count: 'exact', head: true }),
+    ]);
 
-    // Fetch count total UMKM (businesses) & total produk aktif (products) dari Supabase untuk statistik dinamis
-    const { count: totalBusinesses } = await supabase
-        .from('businesses')
-        .select('*', { count: 'exact', head: true });
-
-    const { count: totalProductsCount } = await supabase
-        .from('products')
-        .select('*', { count: 'exact', head: true });
+    const rawProducts = productsRes.data;
+    const error = productsRes.error;
+    const totalBusinesses = businessesCountRes.count;
+    const totalProductsCount = productsCountRes.count;
 
     const statsData = [
         {
