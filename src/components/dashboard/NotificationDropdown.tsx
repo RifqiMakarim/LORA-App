@@ -140,11 +140,20 @@ export default function NotificationDropdown({ isAdminRoute }: NotificationDropd
         )}
       </button>
 
-      {/* Dropdown Panel */}
+      {/* Backdrop Overlay khusus Mobile */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 bg-white rounded-3xl shadow-2xl border border-slate-200/90 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+        <div
+          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 sm:hidden animate-in fade-in duration-200"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
+      {/* Dropdown Panel Responsive (Mobile & Desktop) */}
+      {isOpen && (
+        <div className="fixed inset-x-3 top-16 z-50 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 sm:w-96 max-h-[calc(100vh-5rem)] sm:max-h-[540px] flex flex-col bg-white rounded-3xl shadow-2xl border border-slate-200/90 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
           {/* Header Panel */}
-          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70">
+          <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50/70 flex-shrink-0">
             <div className="flex items-center gap-2">
               <div className="p-1.5 bg-amber-50 text-terracotta rounded-xl border border-amber-200/60">
                 <Bell className="w-4 h-4" />
@@ -191,7 +200,7 @@ export default function NotificationDropdown({ isAdminRoute }: NotificationDropd
           </div>
 
           {/* Filter Tabs */}
-          <div className="flex items-center gap-1 px-3 py-2 border-b border-slate-100 bg-white overflow-x-auto no-scrollbar text-xs">
+          <div className="flex items-center gap-1.5 px-3 py-2 border-b border-slate-100 bg-white overflow-x-auto no-scrollbar text-xs flex-shrink-0">
             <button
               type="button"
               onClick={() => setActiveTab('all')}
@@ -207,7 +216,7 @@ export default function NotificationDropdown({ isAdminRoute }: NotificationDropd
             <button
               type="button"
               onClick={() => setActiveTab('inventory')}
-              className={`px-2.5 py-1 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer text-[11px] flex items-center gap-1.5 ${
                 activeTab === 'inventory'
                   ? 'bg-amber-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -222,7 +231,7 @@ export default function NotificationDropdown({ isAdminRoute }: NotificationDropd
             <button
               type="button"
               onClick={() => setActiveTab('orders')}
-              className={`px-2.5 py-1 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer text-[11px] flex items-center gap-1.5 ${
                 activeTab === 'orders'
                   ? 'bg-emerald-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -237,7 +246,7 @@ export default function NotificationDropdown({ isAdminRoute }: NotificationDropd
             <button
               type="button"
               onClick={() => setActiveTab('events')}
-              className={`px-2.5 py-1 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer text-[11px] flex items-center gap-1 ${
+              className={`px-2.5 py-1 rounded-xl font-bold transition-all whitespace-nowrap cursor-pointer text-[11px] flex items-center gap-1.5 ${
                 activeTab === 'events'
                   ? 'bg-indigo-600 text-white shadow-xs'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
@@ -251,7 +260,7 @@ export default function NotificationDropdown({ isAdminRoute }: NotificationDropd
           </div>
 
           {/* Notification List Container */}
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
+          <div className="flex-1 overflow-y-auto divide-y divide-slate-100 scrollbar-thin">
             {filteredNotifications.length === 0 ? (
               <div className="p-8 text-center space-y-2">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto border border-emerald-100">
@@ -331,7 +340,7 @@ export default function NotificationDropdown({ isAdminRoute }: NotificationDropd
           </div>
 
           {/* Footer Panel */}
-          <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px]">
+          <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between text-[11px] flex-shrink-0">
             <Link
               href="/dashboard/inventory"
               onClick={() => setIsOpen(false)}
