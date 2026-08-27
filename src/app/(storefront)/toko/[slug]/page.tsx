@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { Metadata } from 'next';
 import { createClient } from '@/lib/supabase/server';
+import { getBusinessBySlug } from '@/app/actions/business';
 import TokoStorefrontView from '@/components/storefront/TokoStorefrontView';
 
 interface PageProps {
@@ -14,13 +15,7 @@ interface PageProps {
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
     const { slug } = await params;
-    const supabase = await createClient();
-
-    const { data: business } = await supabase
-        .from('businesses')
-        .select('name, description, logo_url')
-        .eq('slug', slug)
-        .maybeSingle();
+    const business = await getBusinessBySlug(slug);
 
     if (!business) {
         return {
@@ -44,19 +39,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  */
 export default async function TokoStorefrontPage({ params }: PageProps) {
     const { slug } = await params;
-    const supabase = await createClient();
 
-    // 1. Data Fetching Profil Bisnis berdasarkan slug parameter
-    const { data: business, error: businessError } = await supabase
-        .from('businesses')
-        .select('*')
-        .eq('slug', slug)
-        .maybeSingle();
+    // 1. Data Fetching Profil Bisnis dengan Upstash Redis Caching (Cache-Aside pattern: `store:profile:${slug}`)
+    const business = await getBusinessBySlug(slug);
 
     // Jika toko tidak ditemukan, alihkan ke 404
-    if (businessError || !business) {
+    if (!business) {
         notFound();
     }
+
+    const supabase = await createClient();
 
     // 2. Data Fetching Katalog Produk milik toko tersebut
     const { data: products } = await supabase
@@ -68,3 +60,4 @@ export default async function TokoStorefrontPage({ params }: PageProps) {
 
     return <TokoStorefrontView business={business} products={products || []} />;
 }
+

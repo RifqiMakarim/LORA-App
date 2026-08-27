@@ -28,9 +28,14 @@ import {
     Maximize2
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import BackButton from '@/components/ui/BackButton';
+import { getProductImageWebp } from '@/lib/image-utils';
 import { useCart } from '@/components/storefront/CartContext';
 import { createOrder } from '@/app/actions/order';
+import { getBusinessBySlug } from '@/app/actions/business';
 import { supabase } from '@/lib/supabase/client';
+
+
 
 interface BusinessPaymentInfo {
     id: string;
@@ -115,19 +120,15 @@ export default function DedicatedCheckoutPage() {
         }
     }, [currentStoreSlug, slug, router, isPaymentSuccess]);
 
-    // Fetch data informasi toko (termasuk qris_image_url, bank_name, bank_account_number)
+    // Fetch data informasi toko (termasuk qris_image_url, bank_name, bank_account_number) via Redis Cache-Aside
     useEffect(() => {
         async function fetchBusinessPaymentData() {
             if (!slug) return;
             setIsLoadingBusiness(true);
             try {
-                const { data, error } = await supabase
-                    .from('businesses')
-                    .select('id, name, qris_image_url, bank_name, bank_account_number')
-                    .eq('slug', slug)
-                    .maybeSingle();
+                const data = await getBusinessBySlug(slug);
 
-                if (data && !error) {
+                if (data) {
                     setBusinessInfo(data);
 
                     // Tetapkan default opsi terbaik yang tersedia
@@ -147,6 +148,7 @@ export default function DedicatedCheckoutPage() {
         }
         fetchBusinessPaymentData();
     }, [slug]);
+
 
     // Apply Voucher Handler
     const handleApplyVoucher = async (e?: React.FormEvent) => {
@@ -281,31 +283,27 @@ export default function DedicatedCheckoutPage() {
 
     return (
         <div className="space-y-6 pb-20">
-            {/* Header Title & Navigation */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-slate-200">
-                <div className="space-y-1">
-                    <button
-                        type="button"
-                        onClick={() => router.back()}
-                        className="inline-flex items-center gap-1.5 text-xs font-bold text-slate-500 hover:text-terracotta transition-colors mb-1 cursor-pointer"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        <span>Kembali</span>
-                    </button>
-                    <h1 className="text-2xl sm:text-3xl font-outfit font-black text-slate-900">
-                        Checkout Pesanan
-                    </h1>
-                </div>
+            {/* Navigation Header (Matching Product Detail Page style) */}
+            <div className="flex items-center justify-between">
+                <BackButton label="Kembali" />
 
                 <Link
                     href={`/toko/${slug}`}
-                    className="flex items-center gap-2 text-xs font-bold text-slate-700 bg-white hover:bg-orange-50/90 hover:text-terracotta px-4 py-2 rounded-2xl border border-slate-200 hover:border-terracotta shadow-xs w-fit cursor-pointer transition-all active:scale-95 group"
+                    className="inline-flex items-center gap-2 text-xs font-bold text-slate-700 bg-white hover:bg-orange-50/90 hover:text-terracotta px-3.5 py-2 rounded-xl border border-slate-200 hover:border-terracotta shadow-sm cursor-pointer transition-all active:scale-95 group"
                     title={`Kunjungi Toko ${storeTitle}`}
                 >
                     <Store className="w-4 h-4 text-terracotta group-hover:scale-110 transition-transform" />
                     <span>Toko: {storeTitle}</span>
                 </Link>
             </div>
+
+            {/* Title Header */}
+            <div className="pb-4 border-b border-slate-200">
+                <h1 className="text-2xl sm:text-3xl font-outfit font-black text-slate-900">
+                    Checkout Pesanan
+                </h1>
+            </div>
+
 
             {/* Main Split Layout: Left Column (7 cols), Right Column (5 cols) */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
@@ -333,7 +331,7 @@ export default function DedicatedCheckoutPage() {
                                     <div className="w-16 h-16 rounded-2xl bg-slate-100 overflow-hidden flex-shrink-0 border border-slate-200">
                                         {product.image_url ? (
                                             <img
-                                                src={product.image_url}
+                                                src={getProductImageWebp(product.image_url, 150)}
                                                 alt={product.name}
                                                 className="w-full h-full object-cover"
                                             />

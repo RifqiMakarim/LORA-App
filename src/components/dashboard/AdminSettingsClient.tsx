@@ -133,11 +133,12 @@ export default function AdminSettingsClient({ initialProfile }: AdminSettingsCli
             <div className="space-y-2 w-full flex flex-col items-center">
               <ImageUpload
                 value={avatarUrl || ''}
+                mediaType="logo"
                 onConfirm={(url) => setAvatarUrl(url)}
                 onRemove={() => setAvatarUrl(null)}
                 uploadPreset="lora_toko"
                 label="Foto Profil Akun"
-                helperText="Format JPG/PNG/WEBP (Maks 2MB)"
+                helperText="Format JPG/PNG/WEBP (Otomatis WebP 300x300)"
                 aspectRatio="square"
               />
             </div>

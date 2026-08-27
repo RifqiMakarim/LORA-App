@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { getBusinessBySlug } from '@/app/actions/business';
 
 export async function POST(request: Request) {
   try {
@@ -19,12 +20,9 @@ export async function POST(request: Request) {
 
     const supabase = await createClient();
 
-    // 1. Cari bisnis berdasarkan slug
-    const { data: business } = await supabase
-      .from('businesses')
-      .select('id, name')
-      .eq('slug', slug)
-      .maybeSingle();
+    // 1. Cari bisnis berdasarkan slug via Upstash Redis Cache-Aside
+    const business = await getBusinessBySlug(slug);
+
 
     let voucher: any = null;
 

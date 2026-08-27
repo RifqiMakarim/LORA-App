@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { redis } from '@/lib/redis';
 
 export type RegisterBusinessState = {
     error?: string;
@@ -264,8 +265,15 @@ export async function updateBusinessSettings(input: UpdateBusinessInput): Promis
             return { error: `Gagal memperbarui profil toko: ${updateError.message}` };
         }
 
-        if (!updatedRows || updatedRows.length === 0) {
-            return { error: 'Toko tidak ditemukan atau Anda tidak memiliki akses.' };
+        if (updatedRows && updatedRows.length > 0) {
+            const updatedSlug = updatedRows[0].slug;
+            if (updatedSlug) {
+                try {
+                    await redis.del(`store:profile:${updatedSlug}`);
+                } catch (cacheDelErr) {
+                    console.warn(`[Redis Warn] Failed to invalidate cache for store:profile:${updatedSlug}:`, cacheDelErr);
+                }
+            }
         }
 
         revalidatePath('/', 'layout');
@@ -275,3 +283,52 @@ export async function updateBusinessSettings(input: UpdateBusinessInput): Promis
         return { error: err.message || 'Terjadi kesalahan sistem saat memperbarui profil toko.' };
     }
 }
+
+/**
+ * Server Action / Helper untuk mengambil data detail profil toko (business) berdasarkan slug
+ * Menggunakan Upstash Redis Caching (pola Cache-Aside) dengan key `store:profile:${slug}` & TTL 24 Jam ({ ex: 86400 })
+ * Dilengkapi Graceful Degradation (fallback otomatis ke Supabase jika Redis mengalami kendala/timeout)
+ */
+export async function getBusinessBySlug(slug: string) {
+    if (!slug || typeof slug !== 'string') return null;
+
+    const cacheKey = `store:profile:${slug.trim()}`;
+
+    // 1. Cek Redis terlebih dahulu (Cache Hit)
+    try {
+        const cachedBusiness = await redis.get(cacheKey);
+        if (cachedBusiness) {
+            return cachedBusiness as any;
+        }
+    } catch (err) {
+        console.error(`[Redis Error] Failed to get cache for key "${cacheKey}":`, err);
+        // Fallback langsung ke Supabase (Graceful degradation)
+    }
+
+    // 2. Cache Miss: Jalankan query Supabase ke tabel businesses berdasarkan parameter slug
+    try {
+        const supabase = await createClient();
+        const { data: business, error } = await supabase
+            .from('businesses')
+            .select('*')
+            .eq('slug', slug.trim())
+            .maybeSingle();
+
+        if (error || !business) {
+            return null;
+        }
+
+        // 3. Simpan hasil query ke Redis dengan TTL 24 Jam ({ ex: 86400 })
+        try {
+            await redis.set(cacheKey, business, { ex: 86400 });
+        } catch (setErr) {
+            console.error(`[Redis Error] Failed to set cache for key "${cacheKey}":`, setErr);
+        }
+
+        return business;
+    } catch (dbErr) {
+        console.error(`[DB Error] Failed to fetch business for slug "${slug}":`, dbErr);
+        return null;
+    }
+}
+

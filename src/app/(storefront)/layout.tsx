@@ -10,31 +10,19 @@ export default async function StorefrontLayout({ children }: { children: React.R
 
     let profile = null;
     if (user) {
-        const { data: profileData } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .maybeSingle();
+        const [profileRes, businessRes] = await Promise.all([
+            supabase.from('profiles').select('*').eq('id', user.id).maybeSingle(),
+            supabase.from('businesses').select('id, name, slug').eq('owner_id', user.id).maybeSingle(),
+        ]);
 
-        const { data: businessData } = await supabase
-            .from('businesses')
-            .select('id, name, slug')
-            .eq('owner_id', user.id)
-            .maybeSingle();
+        const profileData = profileRes.data;
+        const businessData = businessRes.data;
 
         if (profileData) {
             profile = { ...profileData };
-            // Jika user memiliki toko terdaftar tapi is_seller masih false/null, perbaiki statusnya
+            // Jika user memiliki toko terdaftar tapi is_seller masih false/null, sinkronkan statusnya
             if (businessData && !profile.is_seller) {
                 profile.is_seller = true;
-                // Auto-healing sync ke database Supabase di background
-                supabase
-                    .from('profiles')
-                    .update({ is_seller: true, updated_at: new Date().toISOString() })
-                    .eq('id', user.id)
-                    .then(({ error }) => {
-                        if (error) console.error('[StorefrontLayout] Auto-sync profile is_seller error:', error);
-                    });
             }
         }
     }

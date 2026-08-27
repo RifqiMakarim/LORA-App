@@ -17,6 +17,7 @@ import {
     AlertCircle
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getProductImageWebp } from '@/lib/image-utils';
 
 interface OrderItem {
     id: string;
@@ -247,7 +248,7 @@ export default function KelolaPesananClientView({ order, id, token }: KelolaPesa
                                             <div className="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center overflow-hidden flex-shrink-0">
                                                 {item.products?.image_url ? (
                                                     <img
-                                                        src={item.products.image_url}
+                                                        src={getProductImageWebp(item.products.image_url, 100)}
                                                         alt={item.products.name || 'Produk'}
                                                         className="w-full h-full object-cover"
                                                     />
