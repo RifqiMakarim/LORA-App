@@ -27,8 +27,7 @@ jobs:
           # Melakukan request ringan ke endpoint REST API Supabase PostgREST
           HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
             -X GET "$SUPABASE_URL/rest/v1/" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY")
+            -H "apikey: $SUPABASE_ANON_KEY")
 
           echo "Supabase HTTP Status Code: $HTTP_STATUS"
 
